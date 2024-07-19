@@ -38,7 +38,7 @@ type PolicyPublished struct {
 	Aspf   string `xml:"aspf"`
 	P      string `xml:"p"`
 	Sp     string `xml:"sp"`
-	Pct    string `xml:"pct"`
+	Pct    int    `xml:"pct"`
 	Np     string `xml:"np"`
 }
 

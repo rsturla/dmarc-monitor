@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<feedback>
+  <report_metadata>
+    <org_name>yahoo.com</org_name>
+    <email>postmaster@yahoo.com</email>
+    <report_id>000000000000</report_id>
+    <date_range>
+      <begin>1721174400</begin>
+      <end>1721260799</end>
+    </date_range>
+  </report_metadata>
+  <policy_published>
+    <domain>sturla.uk</domain>
+    <adkim>r</adkim>
+    <aspf>r</aspf>
+    <p>reject</p>
+    <sp>reject</sp>
+    <pct>100</pct>
+    <np>reject</np>
+  </policy_published>
+  <record>
+    <row>
+      <source_ip>2a00:1450:4864:20::12b</source_ip>
+      <count>1</count>
+      <policy_evaluated>
+        <disposition>none</disposition>
+        <dkim>pass</dkim>
+        <spf>pass</spf>
+      </policy_evaluated>
+    </row>
+    <identifiers>
+      <header_from>sturla.uk</header_from>
+    </identifiers>
+    <auth_results>
+      <dkim>
+        <domain>sturla.uk</domain>
+        <result>pass</result>
+        <selector>google</selector>
+      </dkim>
+      <spf>
+        <domain>sturla.uk</domain>
+        <result>pass</result>
+      </spf>
+    </auth_results>
+  </record>
+</feedback>
