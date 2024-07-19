@@ -47,6 +47,10 @@ jobs:
       - name: Go Fmt
         run: go fmt ./...
 
+      - name: Check changed files
+        run: |
+          git diff --exit-code
+
   test:
     runs-on: ubuntu-latest
     steps:
