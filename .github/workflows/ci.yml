@@ -8,6 +8,11 @@ on:
     branches:
       - main
 
+permissions:
+  contents: read
+  pull-requests: read
+  checks: write
+
 jobs:
   lint:
     runs-on: ubuntu-latest
@@ -19,3 +24,39 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version-file: ./go.mod
+
+      - name: Go Vet
+        run: go vet ./...
+
+      - name: Go Lint
+        uses: golangci/golangci-lint-action@v6
+        with:
+          version: latest
+
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: ./go.mod
+
+      - name: Go Fmt
+        run: go fmt ./...
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: ./go.mod
+
+      - name: Go Test
+        run: go test -v ./...
