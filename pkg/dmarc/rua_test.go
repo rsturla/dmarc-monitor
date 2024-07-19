@@ -1,7 +1,7 @@
 package dmarc
 
 import (
-	"io/ioutil"
+	"os"
 	"testing"
 )
 
@@ -33,7 +33,7 @@ func TestUnmarshalXml(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.FileName, func(t *testing.T) {
 			// Read the XML file
-			data, err := ioutil.ReadFile(tc.FileName)
+			data, err := os.ReadFile(tc.FileName)
 			if err != nil {
 				t.Fatalf("failed to read file %s: %v", tc.FileName, err)
 			}
