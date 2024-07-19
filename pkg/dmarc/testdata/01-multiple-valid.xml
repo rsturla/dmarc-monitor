@@ -94,7 +94,7 @@
       <source_ip>5.42.104.137</source_ip>
       <count>1</count>
       <policy_evaluated>
-        <disposition>reject</disposition>
+        <disposition>quarantine</disposition>
         <dkim>fail</dkim>
         <spf>fail</spf>
       </policy_evaluated>

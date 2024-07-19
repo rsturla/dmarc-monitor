@@ -5,12 +5,12 @@ import (
 	"net/netip"
 )
 
-func (f *Feedback) Parse(data []byte) error {
+func (f *RUA) ParseXML(data []byte) error {
 	return xml.Unmarshal(data, f)
 }
 
-// Feedback represents the top-level structure of a DMARC feedback report
-type Feedback struct {
+// RUA represents the top-level structure of a DMARC RUA report
+type RUA struct {
 	ReportMetadata  ReportMetadata  `xml:"report_metadata"`
 	PolicyPublished PolicyPublished `xml:"policy_published"`
 	Records         []Record        `xml:"record"`
@@ -25,10 +25,10 @@ type ReportMetadata struct {
 	DateRange        DateRange `xml:"date_range"`
 }
 
-// DateRange represents the date range for the DMARC report
+// DateRange represents the date range for the DMARC report (in Unix time)
 type DateRange struct {
-	Begin int `xml:"begin"`
-	End   int `xml:"end"`
+	Begin int64 `xml:"begin"`
+	Enc   int64 `xml:"end"`
 }
 
 // PolicyPublished contains information about the DMARC policy published by the domain owner
