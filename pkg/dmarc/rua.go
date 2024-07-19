@@ -28,7 +28,7 @@ type ReportMetadata struct {
 // DateRange represents the date range for the DMARC report (in Unix time)
 type DateRange struct {
 	Begin int64 `xml:"begin"`
-	Enc   int64 `xml:"end"`
+	End   int64 `xml:"end"`
 }
 
 // PolicyPublished contains information about the DMARC policy published by the domain owner
