@@ -18,4 +18,4 @@ jobs:
   ci:
     uses: ./.github/workflows/_ci.yml
     with:
-      working-directory: ./lib/dmarc
+      working-directory: ./libs/dmarc
