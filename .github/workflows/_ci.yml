@@ -14,7 +14,7 @@ permissions:
   checks: write
 
 env:
-  WORKING_DIRECTORY: ${{ github.event.inputs.working-directory }}
+  WORKING_DIRECTORY: ${{ inputs.working-directory }}
 
 jobs:
   lint:
