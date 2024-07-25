@@ -9,11 +9,8 @@ on:
       - main
   workflow_dispatch:
 
-env:
-  PROJECT_DIR: ./lib/dmarc
-
 jobs:
   ci:
     uses: ./.github/workflows/_ci.yml
     with:
-      working-directory: ${{ env.PROJECT_DIR }}
+      working-directory: ./lib/dmarc
