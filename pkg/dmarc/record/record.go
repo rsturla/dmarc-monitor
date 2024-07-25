@@ -58,6 +58,24 @@ type Record struct {
 	SubdomainPolicy     Policy          // 'sp'
 }
 
+// Custom error types
+type DMARCError struct {
+	Parameter string
+	Message   string
+}
+
+func (e *DMARCError) Error() string {
+	return fmt.Sprintf("dmarc: error with parameter '%s': %s", e.Parameter, e.Message)
+}
+
+var (
+	ErrMissingParam     = errors.New("dmarc: missing required parameter")
+	ErrInvalidParam     = errors.New("dmarc: invalid parameter")
+	ErrInvalidURI       = errors.New("dmarc: invalid URI")
+	ErrNegativeDuration = errors.New("dmarc: negative or zero duration")
+	ErrOutOfBounds      = errors.New("dmarc: value out of bounds")
+)
+
 func ParseRecord(txt string) (*Record, error) {
 	params, err := parseParams(txt)
 	if err != nil {
@@ -68,17 +86,17 @@ func ParseRecord(txt string) (*Record, error) {
 
 	v, ok := params["v"]
 	if !ok {
-		return nil, errors.New("dmarc: record is missing a 'v' parameter")
+		return nil, &DMARCError{Parameter: "v", Message: ErrMissingParam.Error()}
 	}
 	rec.Version = v
 
 	p, ok := params["p"]
 	if !ok {
-		return nil, errors.New("dmarc: record is missing a 'p' parameter")
+		return nil, &DMARCError{Parameter: "p", Message: ErrMissingParam.Error()}
 	}
 	rec.Policy, err = parsePolicy(p, "p")
 	if err != nil {
-		return nil, errors.New("dmarc: could not parse 'p' parameter")
+		return nil, err
 	}
 
 	if adkim, ok := params["adkim"]; ok {
@@ -105,10 +123,10 @@ func ParseRecord(txt string) (*Record, error) {
 	if pct, ok := params["pct"]; ok {
 		i, err := strconv.Atoi(pct)
 		if err != nil {
-			return nil, fmt.Errorf("dmarc: invalid parameter 'pct': %v", err)
+			return nil, &DMARCError{Parameter: "pct", Message: ErrInvalidParam.Error()}
 		}
 		if i < 0 || i > 100 {
-			return nil, fmt.Errorf("dmarc: invalid parameter 'pct': value %v out of bounds", i)
+			return nil, &DMARCError{Parameter: "pct", Message: ErrOutOfBounds.Error()}
 		}
 		rec.Percent = i
 	}
@@ -121,7 +139,7 @@ func ParseRecord(txt string) (*Record, error) {
 			case string(ReportFormatAFRF):
 				rec.ReportFormats[i] = ReportFormat(f)
 			default:
-				return nil, errors.New("dmarc: invalid parameter 'rf'")
+				return nil, &DMARCError{Parameter: "rf", Message: ErrInvalidParam.Error()}
 			}
 		}
 	}
@@ -129,10 +147,10 @@ func ParseRecord(txt string) (*Record, error) {
 	if ri, ok := params["ri"]; ok {
 		i, err := strconv.Atoi(ri)
 		if err != nil {
-			return nil, fmt.Errorf("dmarc: invalid parameter 'ri': %v", err)
+			return nil, &DMARCError{Parameter: "ri", Message: ErrInvalidParam.Error()}
 		}
 		if i <= 0 {
-			return nil, fmt.Errorf("dmarc: invalid parameter 'ri': negative or zero duration")
+			return nil, &DMARCError{Parameter: "ri", Message: ErrNegativeDuration.Error()}
 		}
 		rec.ReportInterval = time.Duration(i) * time.Second
 	}
@@ -170,7 +188,7 @@ func parseParams(s string) (map[string]string, error) {
 			if strings.TrimSpace(s) == "" {
 				continue
 			}
-			return params, errors.New("dmarc: malformed params")
+			return params, &DMARCError{Parameter: s, Message: "malformed parameter"}
 		}
 
 		params[strings.TrimSpace(kv[0])] = strings.TrimSpace(kv[1])
@@ -183,7 +201,7 @@ func parsePolicy(s, param string) (Policy, error) {
 	case string(PolicyNone), string(PolicyQuarantine), string(PolicyReject):
 		return Policy(s), nil
 	default:
-		return "", fmt.Errorf("dmarc: invalid policy for parameter '%v'", param)
+		return "", &DMARCError{Parameter: param, Message: ErrInvalidParam.Error()}
 	}
 }
 
@@ -192,7 +210,7 @@ func parseAlignmentMode(s, param string) (AlignmentMode, error) {
 	case string(AlignmentModeRelaxed), string(AlignmentModeStrict):
 		return AlignmentMode(s), nil
 	default:
-		return "", fmt.Errorf("dmarc: invalid alignment mode for parameter '%v'", param)
+		return "", &DMARCError{Parameter: param, Message: ErrInvalidParam.Error()}
 	}
 }
 
@@ -210,7 +228,7 @@ func parseFailureOptions(s string) ([]FailureOption, error) {
 		case string(FailureOptionSPF):
 			opts = append(opts, FailureOptionSPF)
 		default:
-			return []FailureOption{FailureOptionAll}, errors.New("dmarc: invalid failure option")
+			return []FailureOption{FailureOptionAll}, &DMARCError{Parameter: "fo", Message: ErrInvalidParam.Error()}
 		}
 	}
 	return opts, nil
@@ -226,13 +244,12 @@ func parseURIList(s string) ([]string, error) {
 		if strings.HasPrefix(u, "mailto:") {
 			u = u[7:]
 		} else {
-			fmt.Printf("dmarc: invalid URI: %v", u)
-			return nil, fmt.Errorf("dmarc: invalid URI at index %v: missing mailto: prefix", i)
+			return nil, &DMARCError{Parameter: "rua/ruf", Message: ErrInvalidURI.Error()}
 		}
 
 		addr, err := addressParser.Parse(u)
 		if err != nil {
-			return nil, fmt.Errorf("dmarc: invalid URI at index %v: %v", i, err)
+			return nil, &DMARCError{Parameter: fmt.Sprintf("uri index %d", i), Message: err.Error()}
 		}
 
 		// Add the address (including the mailto: prefix) back to the list
