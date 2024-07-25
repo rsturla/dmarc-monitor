@@ -1,4 +1,4 @@
-package dmarc
+package record
 
 import (
 	"errors"
@@ -65,15 +65,16 @@ type DMARCError struct {
 }
 
 func (e *DMARCError) Error() string {
-	return fmt.Sprintf("dmarc: error with parameter '%s': %s", e.Parameter, e.Message)
+	return fmt.Sprintf("dmarc: %s - %s", e.Parameter, e.Message)
 }
 
 var (
-	ErrMissingParam     = errors.New("dmarc: missing required parameter")
-	ErrInvalidParam     = errors.New("dmarc: invalid parameter")
-	ErrInvalidURI       = errors.New("dmarc: invalid URI")
-	ErrNegativeDuration = errors.New("dmarc: negative or zero duration")
-	ErrOutOfBounds      = errors.New("dmarc: value out of bounds")
+	ErrMalformedParam   = errors.New("malformed parameter")
+	ErrMissingParam     = errors.New("missing required parameter")
+	ErrInvalidParam     = errors.New("invalid parameter")
+	ErrInvalidURI       = errors.New("invalid URI")
+	ErrNegativeDuration = errors.New("negative or zero duration")
+	ErrOutOfBounds      = errors.New("value out of bounds")
 )
 
 func ParseRecord(txt string) (*Record, error) {
@@ -156,14 +157,14 @@ func ParseRecord(txt string) (*Record, error) {
 	}
 
 	if rua, ok := params["rua"]; ok {
-		rec.ReportURIsAggregate, err = parseURIList(rua)
+		rec.ReportURIsAggregate, err = parseURIList(rua, "rua")
 		if err != nil {
 			return nil, err
 		}
 	}
 
 	if ruf, ok := params["ruf"]; ok {
-		rec.ReportURIsFailure, err = parseURIList(ruf)
+		rec.ReportURIsFailure, err = parseURIList(ruf, "ruf")
 		if err != nil {
 			return nil, err
 		}
@@ -182,13 +183,13 @@ func ParseRecord(txt string) (*Record, error) {
 func parseParams(s string) (map[string]string, error) {
 	pairs := strings.Split(s, ";")
 	params := make(map[string]string)
-	for _, s := range pairs {
-		kv := strings.SplitN(s, "=", 2)
+	for _, pair := range pairs {
+		kv := strings.SplitN(pair, "=", 2)
 		if len(kv) != 2 {
-			if strings.TrimSpace(s) == "" {
+			if strings.TrimSpace(pair) == "" {
 				continue
 			}
-			return params, &DMARCError{Parameter: s, Message: "malformed parameter"}
+			return params, &DMARCError{Parameter: strings.TrimSpace(pair), Message: ErrMalformedParam.Error()}
 		}
 
 		params[strings.TrimSpace(kv[0])] = strings.TrimSpace(kv[1])
@@ -234,7 +235,7 @@ func parseFailureOptions(s string) ([]FailureOption, error) {
 	return opts, nil
 }
 
-func parseURIList(s string) ([]string, error) {
+func parseURIList(s, param string) ([]string, error) {
 	l := strings.Split(s, ",")
 
 	var addressParser mail.AddressParser
@@ -244,12 +245,12 @@ func parseURIList(s string) ([]string, error) {
 		if strings.HasPrefix(u, "mailto:") {
 			u = u[7:]
 		} else {
-			return nil, &DMARCError{Parameter: "rua/ruf", Message: ErrInvalidURI.Error()}
+			return nil, &DMARCError{Parameter: param, Message: ErrInvalidURI.Error()}
 		}
 
 		addr, err := addressParser.Parse(u)
 		if err != nil {
-			return nil, &DMARCError{Parameter: fmt.Sprintf("uri index %d", i), Message: err.Error()}
+			return nil, &DMARCError{Parameter: param, Message: ErrInvalidURI.Error()}
 		}
 
 		// Add the address (including the mailto: prefix) back to the list
