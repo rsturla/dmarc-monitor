@@ -1,4 +1,4 @@
-package dmarc
+package rua
 
 import (
 	"os"
