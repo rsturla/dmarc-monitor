@@ -1,17 +1,20 @@
 name: CI
 
 on:
-  push:
-    branches:
-      - main
-  pull_request:
-    branches:
-      - main
+  workflow_call:
+    inputs:
+      working-directory:
+        description: "The working directory to run the CI in"
+        required: true
+        type: string
 
 permissions:
   contents: read
   pull-requests: read
   checks: write
+
+env:
+  WORKING_DIRECTORY: ${{ inputs.working-directory }}
 
 jobs:
   lint:
@@ -23,15 +26,17 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@0a12ed9d6a96ab950c8f026ed9f722fe0da7ef32 # v5
         with:
-          go-version-file: ./go.mod
+          go-version-file: ${{ env.WORKING_DIRECTORY }}/go.mod
 
       - name: Go Vet
+        working-directory: ${{ env.WORKING_DIRECTORY }}
         run: go vet ./...
 
       - name: Go Lint
         uses: golangci/golangci-lint-action@a4f60bb28d35aeee14e6880718e0c85ff1882e64 # v6
         with:
           version: latest
+          working-directory: ${{ env.WORKING_DIRECTORY }}
 
   format:
     runs-on: ubuntu-latest
@@ -42,9 +47,10 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@0a12ed9d6a96ab950c8f026ed9f722fe0da7ef32 # v5
         with:
-          go-version-file: ./go.mod
+          go-version-file: ${{ env.WORKING_DIRECTORY }}/go.mod
 
       - name: Go Fmt
+        working-directory: ${{ env.WORKING_DIRECTORY }}
         run: go fmt ./...
 
       - name: Check changed files
@@ -60,7 +66,8 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@0a12ed9d6a96ab950c8f026ed9f722fe0da7ef32 # v5
         with:
-          go-version-file: ./go.mod
+          go-version-file: ${{ env.WORKING_DIRECTORY }}/go.mod
 
       - name: Go Test
+        working-directory: ${{ env.WORKING_DIRECTORY }}
         run: go test -v ./...
