@@ -1,0 +1,12 @@
+{
+  "name": "ingest-service-infra",
+  "packageManager": "yarn@4.3.1",
+  "scripts": {
+    "cdk": "cdk"
+  },
+  "devDependencies": {
+    "aws-cdk": "^2.150.0",
+    "aws-cdk-lib": "^2.150.0",
+    "constructs": "^10.3.0"
+  }
+}
