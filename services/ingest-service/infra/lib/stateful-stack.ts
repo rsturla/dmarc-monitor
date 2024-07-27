@@ -1,12 +1,13 @@
 import { Stack, StackProps, RemovalPolicy, CfnOutput } from "aws-cdk-lib";
 import { Table, AttributeType } from "aws-cdk-lib/aws-dynamodb";
 import { Bucket, BlockPublicAccess } from "aws-cdk-lib/aws-s3";
-import { Topic } from "aws-cdk-lib/aws-sns";
+import { Queue, QueueEncryption } from "aws-cdk-lib/aws-sqs";
 import { Construct } from "constructs";
 
 export class StatefulStack extends Stack {
   public readonly aggregateReportTable: Table;
   public readonly aggregateReportS3Bucket: Bucket;
+  public readonly rawEmailsQueue: Queue;
 
   constructor(scope: Construct, id: string, props?: StackProps) {
     super(scope, id, props);
@@ -28,6 +29,10 @@ export class StatefulStack extends Stack {
       }
     );
 
+    const rawEmailsQueue = new Queue(this, "RawEmailsQueue", {
+      encryption: QueueEncryption.SQS_MANAGED,
+    });
+
     new CfnOutput(this, "AggregateReportTableOutput", {
       value: aggregateReportTable.tableName,
     });
@@ -36,7 +41,12 @@ export class StatefulStack extends Stack {
       value: aggregateReportS3Bucket.bucketName,
     });
 
+    new CfnOutput(this, "RawEmailsQueueOutput", {
+      value: rawEmailsQueue.queueName,
+    });
+
     this.aggregateReportTable = aggregateReportTable;
     this.aggregateReportS3Bucket = aggregateReportS3Bucket;
+    this.rawEmailsQueue = rawEmailsQueue;
   }
 }

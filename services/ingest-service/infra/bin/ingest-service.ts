@@ -8,7 +8,7 @@ const statefulStack = new StatefulStack(app, "StatefulStack");
 new StatelessStack(app, "StatelessStack", {
   aggregateReportTableName: statefulStack.aggregateReportTable.tableName,
   aggregateReportS3BucketName: statefulStack.aggregateReportS3Bucket.bucketName,
-  receiverDomain: process.env.RECEIVER_DOMAIN!,
+  receiverDomain: process.env.RECEIVER_DOMAIN || "dm.sturla.tech",
 });
 
 app.synth();
