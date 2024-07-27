@@ -8,3 +8,9 @@ go.work
 !.yarn/versions
 
 node_modules/
+
+cdk.out/
+
+# Ignore build Go files in ./bin but keep the infra/bin directories
+!infra/bin/
+bin/
