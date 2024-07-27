@@ -8,8 +8,6 @@ const statefulStack = new StatefulStack(app, "StatefulStack");
 new StatelessStack(app, "StatelessStack", {
   aggregateReportTableName: statefulStack.aggregateReportTable.tableName,
   aggregateReportS3BucketName: statefulStack.aggregateReportS3Bucket.bucketName,
-  aggregateReportSNSTopicName: statefulStack.aggregateReportSNSTopic.topicName,
-  // Get the receiver domain from environment variables
   receiverDomain: process.env.RECEIVER_DOMAIN!,
 });
 
