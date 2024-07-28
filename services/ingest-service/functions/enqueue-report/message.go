@@ -28,7 +28,7 @@ func extractPlusAddressTag(email string) (string, error) {
 
 // Retrieves the raw email location from S3
 func getRawEmailLocation(ctx context.Context, s3Client *s3.Client, bucket, prefix, messageId string) (string, error) {
-	messageLocation := fmt.Sprintf("%s/%s", prefix, messageId)
+	messageLocation := fmt.Sprintf("%s%s", prefix, messageId)
 
 	// Call HeadObject API to check if the object exists
 	_, err := s3Client.HeadObject(ctx, &s3.HeadObjectInput{
