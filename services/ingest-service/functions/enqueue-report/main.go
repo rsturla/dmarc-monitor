@@ -56,8 +56,10 @@ func processEmail(ctx context.Context, awsClient *AWSClient, config *Config, mai
 	}
 
 	messageJSON, err := json.Marshal(map[string]string{
-		"tag":      recipientTag,
-		"location": rawEmailLocation,
+		"tag":          recipientTag,
+		"location":     rawEmailLocation,
+		"receivedTime": fmt.Sprintf("%d", mail.Timestamp.Unix()),
+		"messageID":    mail.MessageID,
 	})
 	if err != nil {
 		return fmt.Errorf("error marshalling message to JSON: %w", err)
