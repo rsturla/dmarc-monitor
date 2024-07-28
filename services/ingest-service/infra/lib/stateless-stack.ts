@@ -1,6 +1,7 @@
 import { StackProps, Stack } from "aws-cdk-lib";
 import { Construct } from "constructs";
 import { SESNestedStack } from "./ses-nested-stack";
+import { ExtractReportNestedStack } from "./extract-report-nested-stack";
 
 export interface StatelessStackProps extends StackProps {
   readonly rawEmailQueueArn: string;
@@ -17,5 +18,14 @@ export class StatelessStack extends Stack {
       receiverDomain: props.receiverDomain,
       rawEmailQueueArn: props.rawEmailQueueArn,
     });
+
+    const extractReportNestedStack = new ExtractReportNestedStack(
+      this,
+      "ExtractReportNestedStack",
+      {
+        rawEmailBucketName: props.rawEmailBucketName,
+        rawEmailQueueArn: props.rawEmailQueueArn,
+      }
+    );
   }
 }
