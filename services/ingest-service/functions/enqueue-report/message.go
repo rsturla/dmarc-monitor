@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"net/mail"
 	"strings"
-
-	"github.com/aws/aws-sdk-go-v2/service/s3"
 )
 
 // Extracts the tag from a plus-addressed email
@@ -27,16 +25,16 @@ func extractPlusAddressTag(email string) (string, error) {
 }
 
 // Retrieves the raw email location from S3
-func getRawEmailLocation(ctx context.Context, s3Client *s3.Client, bucket, prefix, messageId string) (string, error) {
+func getRawEmailLocation(ctx context.Context, awsClient *AWSClient, bucket, prefix, messageId string) (string, error) {
 	messageLocation := fmt.Sprintf("%s%s", prefix, messageId)
 
 	// Call HeadObject API to check if the object exists
-	_, err := s3Client.HeadObject(ctx, &s3.HeadObjectInput{
-		Bucket: &bucket,
-		Key:    &messageLocation,
-	})
+	exists, err := awsClient.s3ObjectExists(ctx, bucket, messageLocation)
 	if err != nil {
-		return "", fmt.Errorf("error getting raw email location for message ID %s: %w", messageId, err)
+		return "", fmt.Errorf("error checking if object exists: %w", err)
+	}
+	if !exists {
+		return "", fmt.Errorf("object does not exist: %s", messageLocation)
 	}
 
 	return fmt.Sprintf("s3://%s/%s", bucket, messageLocation), nil

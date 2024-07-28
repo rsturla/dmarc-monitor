@@ -2,11 +2,13 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 	"github.com/aws/aws-sdk-go-v2/service/sqs"
 )
 
@@ -41,4 +43,19 @@ func (c *AWSClient) publishSQSMessage(ctx context.Context, queueURL, message str
 
 	log.Printf("Message sent with ID %s\n", *msg.MessageId)
 	return nil
+}
+
+func (c *AWSClient) s3ObjectExists(ctx context.Context, bucket, key string) (bool, error) {
+	_, err := c.S3.HeadObject(ctx, &s3.HeadObjectInput{
+		Bucket: &bucket,
+		Key:    &key,
+	})
+	if err != nil {
+		var notFoundErr *types.NotFound
+		if errors.As(err, &notFoundErr) {
+			return false, nil
+		}
+		return false, err // Return the actual error if it's not a NotFound error
+	}
+	return true, nil
 }

@@ -50,7 +50,7 @@ func processEmail(ctx context.Context, awsClient *AWSClient, config *Config, mai
 		return fmt.Errorf("error extracting tag from recipient email address: %w", err)
 	}
 
-	rawEmailLocation, err := getRawEmailLocation(ctx, awsClient.S3, config.BucketName, "raw/", mail.MessageID)
+	rawEmailLocation, err := getRawEmailLocation(ctx, awsClient, config.BucketName, "raw/", mail.MessageID)
 	if err != nil {
 		return fmt.Errorf("error getting raw email location: %w", err)
 	}
