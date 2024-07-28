@@ -3,11 +3,13 @@ import { StatefulStack } from "../lib/stateful-stack";
 import { StatelessStack } from "../lib/stateless-stack";
 
 const app = new cdk.App();
+const appName = "dmarc-monitor-ingest-service";
 
-const statefulStack = new StatefulStack(app, "StatefulStack");
-new StatelessStack(app, "StatelessStack", {
-  aggregateReportTableName: statefulStack.aggregateReportTable.tableName,
-  aggregateReportS3BucketName: statefulStack.aggregateReportS3Bucket.bucketName,
+const statefulStack = new StatefulStack(app, `${appName}-StatefulStack`);
+
+new StatelessStack(app, `${appName}-StatelessStack`, {
+  rawEmailQueueArn: statefulStack.rawEmailQueue.queueArn,
+  rawEmailBucketName: statefulStack.rawEmailBucket.bucketName,
   receiverDomain: process.env.RECEIVER_DOMAIN || "dm.sturla.tech",
 });
 

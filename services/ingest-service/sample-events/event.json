@@ -7,8 +7,8 @@
         "mail": {
           "timestamp": "2019-08-05T21:30:02.028Z",
           "source": "prvs=144d0cba7=sender@example.com",
-          "messageId": "EXAMPLE7c191be45-e9aedb9a-02f9-4d12-a87d-dd0099a07f8a-000000",
-          "destination": ["recipient@example.com"],
+          "messageId": "cf6t09v819mqc62r04vvr25ho0goruvatt0t3ro1",
+          "destination": ["recipient+test@example.com"],
           "headersTruncated": false,
           "headers": [
             {
