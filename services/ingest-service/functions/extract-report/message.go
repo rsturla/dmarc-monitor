@@ -1,5 +1,8 @@
 package main
 
+// The contents of this file are a slightly modified version of the
+// https://github.com/DusanKasan/parsemail package.
+
 import (
 	"bytes"
 	"encoding/base64"
@@ -151,7 +154,7 @@ func parseMultipartRelated(msg io.Reader, boundary string) (textBody, htmlBody s
 
 				embeddedFiles = append(embeddedFiles, ef)
 			} else {
-				return textBody, htmlBody, embeddedFiles, fmt.Errorf("Can't process multipart/related inner mime type: %s", contentType)
+				return textBody, htmlBody, embeddedFiles, fmt.Errorf("failed to process multipart/related inner mime type: %s", contentType)
 			}
 		}
 	}
@@ -208,7 +211,7 @@ func parseMultipartAlternative(msg io.Reader, boundary string) (textBody, htmlBo
 
 				embeddedFiles = append(embeddedFiles, ef)
 			} else {
-				return textBody, htmlBody, embeddedFiles, fmt.Errorf("Can't process multipart/alternative inner mime type: %s", contentType)
+				return textBody, htmlBody, embeddedFiles, fmt.Errorf("failed to process multipart/alternative inner mime type: %s", contentType)
 			}
 		}
 	}
@@ -263,7 +266,7 @@ func parseMultipartMixed(msg io.Reader, boundary string) (textBody, htmlBody str
 
 			attachments = append(attachments, at)
 		} else {
-			return textBody, htmlBody, attachments, embeddedFiles, fmt.Errorf("Unknown multipart/mixed nested mime type: %s", contentType)
+			return textBody, htmlBody, attachments, embeddedFiles, fmt.Errorf("unknown mime type: %s", contentType)
 		}
 	}
 
