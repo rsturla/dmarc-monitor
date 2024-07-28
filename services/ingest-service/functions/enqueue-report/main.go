@@ -28,7 +28,7 @@ func handler(ctx context.Context, sesEvent events.SimpleEmailEvent) error {
 			return fmt.Errorf("error processing email: %w", err)
 		}
 	}
-	fmt.Println("Email processing complete.")
+	log.Print("Email processing complete.")
 	return nil
 }
 
@@ -36,7 +36,7 @@ func handler(ctx context.Context, sesEvent events.SimpleEmailEvent) error {
 func main() {
 	if os.Getenv("AWS_LAMBDA_RUNTIME_API") == "" {
 		if err := handleLocalEvent(); err != nil {
-			fmt.Printf("Error processing local event: %v\n", err)
+			log.Printf("Error processing local event: %v\n", err)
 		}
 	} else {
 		lambda.Start(handler)
