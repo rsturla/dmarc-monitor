@@ -1,0 +1,7 @@
+{
+  "name": "dmarc-monitor",
+  "packageManager": "yarn@4.3.1",
+  "workspaces": [
+    "services/*/infra"
+  ]
+}

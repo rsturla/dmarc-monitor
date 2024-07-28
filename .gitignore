@@ -1,1 +1,16 @@
 go.work
+
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/sdks
+!.yarn/versions
+
+node_modules/
+
+cdk.out/
+
+# Ignore build Go files in ./bin but keep the infra/bin directories
+!infra/bin/
+bin/
