@@ -60,6 +60,12 @@ export class ExtractReportNestedStack extends NestedStack {
         resources: [`${rawEmailBucket.bucketArn}/raw/*`],
       })
     );
+    extractReportLambda.addToRolePolicy(
+      new iam.PolicyStatement({
+        actions: ["s3:PutObject"],
+        resources: [`${rawEmailBucket.bucketArn}/reports/*`],
+      })
+    );
 
     extractReportLambda.addToRolePolicy(
       new iam.PolicyStatement({

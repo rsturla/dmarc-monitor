@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"io"
 
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
@@ -29,4 +30,17 @@ func NewAWSClient(ctx context.Context) (*AWSClient, error) {
 		SQS:      sqs.NewFromConfig(cfg),
 		DynamoDB: dynamodb.NewFromConfig(cfg),
 	}, nil
+}
+
+func getS3Object(ctx context.Context, awsClient *AWSClient, bucket, key string) ([]byte, error) {
+	contents, err := awsClient.S3.GetObject(ctx, &s3.GetObjectInput{
+		Bucket: &bucket,
+		Key:    &key,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("error getting object from S3: %w", err)
+	}
+	defer contents.Body.Close()
+
+	return io.ReadAll(contents.Body)
 }

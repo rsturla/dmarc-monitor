@@ -1,15 +1,14 @@
 package main
 
 import (
-	"archive/zip"
 	"bytes"
-	"compress/gzip"
 	"context"
 	"encoding/json"
 	"fmt"
 	"io"
 	"log"
 	"os"
+	"time"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
@@ -65,7 +64,7 @@ func processRecord(ctx context.Context, awsClient *AWSClient, config *Config, re
 
 	log.Printf("Processing message: %s\n", message.MessageId)
 
-	body, err := getS3ObjectBody(ctx, awsClient, message.S3BucketName, message.S3ObjectPath)
+	body, err := getS3Object(ctx, awsClient, message.S3BucketName, message.S3ObjectPath)
 	if err != nil {
 		return err
 	}
@@ -76,80 +75,46 @@ func processRecord(ctx context.Context, awsClient *AWSClient, config *Config, re
 	}
 
 	for _, attachment := range email.Attachments {
-		if err := processAttachment(&attachment); err != nil {
-			return err
+		data, err := getAttachmentData(&attachment)
+		if err != nil {
+			return fmt.Errorf("error processing attachment: %w", err)
+		}
+
+		// Save the report to the S3 bucket - under the reports/<message> key
+		if err := saveReport(ctx, awsClient, config, message.MessageId, message.Tag, data); err != nil {
+			return fmt.Errorf("error saving report: %w", err)
 		}
 	}
 
 	return nil
 }
 
-func getS3ObjectBody(ctx context.Context, awsClient *AWSClient, bucket, key string) ([]byte, error) {
-	contents, err := awsClient.S3.GetObject(ctx, &s3.GetObjectInput{
-		Bucket: &bucket,
-		Key:    &key,
-	})
-	if err != nil {
-		return nil, fmt.Errorf("error getting object from S3: %w", err)
-	}
-	defer contents.Body.Close()
-
-	return io.ReadAll(contents.Body)
-}
-
-func processAttachment(attachment *Attachment) error {
+func getAttachmentData(attachment *Attachment) ([]byte, error) {
 	data, err := io.ReadAll(attachment.Data)
 	if err != nil {
-		return fmt.Errorf("error reading attachment data: %w", err)
+		return nil, fmt.Errorf("error reading attachment data: %w", err)
 	}
 
 	uncompressed, err := uncompress(data, attachment.ContentType)
 	if err != nil {
-		return err
+		return nil, fmt.Errorf("error uncompressing attachment: %w", err)
 	}
 
-	log.Printf("Attachment: %s, MIME type: %s, Uncompressed content: %s\n", attachment.Filename, attachment.ContentType, uncompressed)
+	return uncompressed, nil
+}
+
+func saveReport(ctx context.Context, awsClient *AWSClient, config *Config, messageID string, tenantId string, data []byte) error {
+	s3Key := fmt.Sprintf("reports/%s/%s/%s.xml", tenantId, time.Now().Format("2006/01/02"), messageID)
+	contentType := "application/xml"
+	_, err := awsClient.S3.PutObject(ctx, &s3.PutObjectInput{
+		Bucket:      &config.BucketName,
+		Key:         &s3Key,
+		Body:        bytes.NewReader(data),
+		ContentType: &contentType,
+	})
+	if err != nil {
+		return fmt.Errorf("error saving report to S3: %w", err)
+	}
+
 	return nil
-}
-
-func uncompress(data []byte, mime string) ([]byte, error) {
-	switch mime {
-	case "application/gzip":
-		return uncompressGzip(data)
-	case "application/zip":
-		return uncompressZip(data)
-	default:
-		return nil, fmt.Errorf("unsupported MIME type: %s", mime)
-	}
-}
-
-func uncompressGzip(data []byte) ([]byte, error) {
-	gzipReader, err := gzip.NewReader(bytes.NewReader(data))
-	if err != nil {
-		return nil, fmt.Errorf("error creating gzip reader: %w", err)
-	}
-	defer gzipReader.Close()
-
-	return io.ReadAll(gzipReader)
-}
-
-func uncompressZip(data []byte) ([]byte, error) {
-	zipReader, err := zip.NewReader(bytes.NewReader(data), int64(len(data)))
-	if err != nil {
-		return nil, fmt.Errorf("error creating zip reader: %w", err)
-	}
-
-	for _, f := range zipReader.File {
-		if !f.FileInfo().IsDir() {
-			file, err := f.Open()
-			if err != nil {
-				return nil, fmt.Errorf("error opening file: %w", err)
-			}
-			defer file.Close()
-
-			return io.ReadAll(file)
-		}
-	}
-
-	return nil, fmt.Errorf("no files found in zip archive")
 }
