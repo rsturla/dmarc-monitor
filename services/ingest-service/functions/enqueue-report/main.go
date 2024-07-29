@@ -57,7 +57,9 @@ func processEmail(ctx context.Context, awsClient *AWSClient, config *Config, mai
 
 	messageJSON, err := json.Marshal(map[string]string{
 		"tag":          recipientTag,
-		"location":     rawEmailLocation,
+		"s3BucketName": config.BucketName,
+		"s3ObjectPath": fmt.Sprintf("%s%s", "raw/", mail.MessageID),
+		"s3ObjectFull": rawEmailLocation,
 		"receivedTime": fmt.Sprintf("%d", mail.Timestamp.Unix()),
 		"messageID":    mail.MessageID,
 	})

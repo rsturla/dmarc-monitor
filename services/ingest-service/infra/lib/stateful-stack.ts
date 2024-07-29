@@ -27,8 +27,16 @@ export class StatefulStack extends Stack {
       prefix: "raw/",
     });
 
+    const rawEmailDqlQueue = new Queue(this, "RawEmailDqlQueue", {
+      encryption: QueueEncryption.SQS_MANAGED,
+    });
+
     const rawEmailQueue = new Queue(this, "RawEmailQueue", {
       encryption: QueueEncryption.SQS_MANAGED,
+      deadLetterQueue: {
+        queue: rawEmailDqlQueue,
+        maxReceiveCount: 3,
+      },
     });
 
     this.rawEmailBucket = rawEmailBucket;
