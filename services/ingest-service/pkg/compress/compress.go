@@ -1,4 +1,4 @@
-package main
+package compress
 
 import (
 	"archive/zip"
@@ -8,18 +8,18 @@ import (
 	"io"
 )
 
-func uncompress(data []byte, mime string) ([]byte, error) {
-	switch mime {
+func Decompress(data []byte, mimeType string) ([]byte, error) {
+	switch mimeType {
 	case "application/gzip":
-		return uncompressGzip(data)
+		return decompressGzip(data)
 	case "application/zip":
-		return uncompressZip(data)
+		return decompressZip(data)
 	default:
-		return nil, fmt.Errorf("unsupported MIME type: %s", mime)
+		return nil, fmt.Errorf("unsupported MIME type: %s", mimeType)
 	}
 }
 
-func uncompressGzip(data []byte) ([]byte, error) {
+func decompressGzip(data []byte) ([]byte, error) {
 	gzipReader, err := gzip.NewReader(bytes.NewReader(data))
 	if err != nil {
 		return nil, fmt.Errorf("error creating gzip reader: %w", err)
@@ -29,7 +29,7 @@ func uncompressGzip(data []byte) ([]byte, error) {
 	return io.ReadAll(gzipReader)
 }
 
-func uncompressZip(data []byte) ([]byte, error) {
+func decompressZip(data []byte) ([]byte, error) {
 	zipReader, err := zip.NewReader(bytes.NewReader(data), int64(len(data)))
 	if err != nil {
 		return nil, fmt.Errorf("error creating zip reader: %w", err)

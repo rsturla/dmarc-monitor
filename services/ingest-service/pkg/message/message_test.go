@@ -1,4 +1,4 @@
-package main
+package message
 
 import (
 	"encoding/base64"
@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-func TestParseEmail(t *testing.T) {
+func TestParseMailEmail(t *testing.T) {
 	var testData = map[int]struct {
 		mailData string
 
@@ -406,7 +406,7 @@ So, "Hello".`,
 	}
 
 	for index, td := range testData {
-		e, err := Parse(strings.NewReader(td.mailData))
+		e, err := ParseMail(strings.NewReader(td.mailData))
 		if err != nil {
 			t.Error(err)
 		}
