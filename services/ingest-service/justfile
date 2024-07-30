@@ -1,0 +1,21 @@
+defaultArch := "amd64"
+
+build ARCH=defaultArch: clean
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+    # Create the bin directory if it doesn't exist
+    mkdir -p bin
+
+    # Find all directories in ./functions and build them
+    for dir in ./functions/*/; do
+        # Get the name of the directory
+        function_name=$(basename "$dir")
+
+        # Build the Go binary for each directory
+        GOOS=linux GOARCH={{ARCH}} go build -tags lambda.norpc -o "bin/${function_name}/bootstrap" "$dir"
+    done
+
+
+clean:
+    rm -rf ./bin/

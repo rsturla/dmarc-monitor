@@ -1,4 +1,4 @@
-package main
+package message
 
 import (
 	"encoding/base64"
@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-func TestParseEmail(t *testing.T) {
+func TestParseMailEmail(t *testing.T) {
 	var testData = map[int]struct {
 		mailData string
 
@@ -406,7 +406,7 @@ So, "Hello".`,
 	}
 
 	for index, td := range testData {
-		e, err := Parse(strings.NewReader(td.mailData))
+		e, err := ParseMail(strings.NewReader(td.mailData))
 		if err != nil {
 			t.Error(err)
 		}
@@ -806,17 +806,6 @@ Message-ID: <5678.21-Nov-1997@example.com>
 Hi everyone.
 `
 
-// todo: not yet implemented in net/mail
-// once there is support for this, add it
-var rfc5322exampleA13 = `From: Pete <pete@silly.example>
-To: A Group:Ed Jones <c@a.test>,joe@where.test,John <jdoe@one.test>;
-Cc: Undisclosed recipients:;
-Date: Thu, 13 Feb 1969 23:32:54 -0330
-Message-ID: <testabcd.1234@silly.example>
-
-Testing.
-`
-
 // we skipped the first message bcause it's the same as A 1.1
 var rfc5322exampleA2a = `From: Mary Smith <mary@example.net>
 To: John Doe <jdoe@machine.example>
@@ -850,22 +839,6 @@ To: Mary Smith <mary@example.net>
 Subject: Saying Hello
 Date: Fri, 21 Nov 1997 09:55:06 -0600
 Message-ID: <1234@local.machine.example>
-
-This is a message just to say hello.
-So, "Hello".`
-
-var rfc5322exampleA4 = `Received: from x.y.test
-  by example.net
-  via TCP
-  with ESMTP
-  id ABC12345
-  for <mary@example.net>;  21 Nov 1997 10:05:43 -0600
-Received: from node.example by x.y.test; 21 Nov 1997 10:01:22 -0600
-From: John Doe <jdoe@node.example>
-To: Mary Smith <mary@example.net>
-Subject: Saying Hello
-Date: Fri, 21 Nov 1997 09:55:06 -0600
-Message-ID: <1234@local.node.example>
 
 This is a message just to say hello.
 So, "Hello".`

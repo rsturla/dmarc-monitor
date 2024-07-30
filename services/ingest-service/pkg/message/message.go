@@ -1,4 +1,4 @@
-package main
+package message
 
 // The contents of this file are a slightly modified version of the
 // https://github.com/DusanKasan/parsemail package.
@@ -22,7 +22,7 @@ const contentTypeTextHtml = "text/html"
 const contentTypeTextPlain = "text/plain"
 
 // Parse an email message read from io.Reader into parsemail.Email struct
-func Parse(r io.Reader) (email Email, err error) {
+func ParseMail(r io.Reader) (email Email, err error) {
 	msg, err := mail.ReadMessage(r)
 	if err != nil {
 		return
@@ -375,7 +375,7 @@ type headerParser struct {
 	err    error
 }
 
-func (hp headerParser) parseAddress(s string) (ma *mail.Address) {
+func (hp *headerParser) parseAddress(s string) (ma *mail.Address) {
 	if hp.err != nil {
 		return nil
 	}
@@ -389,7 +389,7 @@ func (hp headerParser) parseAddress(s string) (ma *mail.Address) {
 	return nil
 }
 
-func (hp headerParser) parseAddressList(s string) (ma []*mail.Address) {
+func (hp *headerParser) parseAddressList(s string) (ma []*mail.Address) {
 	if hp.err != nil {
 		return
 	}

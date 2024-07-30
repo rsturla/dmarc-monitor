@@ -1,4 +1,4 @@
-package main
+package message
 
 import "testing"
 
@@ -20,7 +20,7 @@ func TestExtractPlusAddressTag(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.email, func(t *testing.T) {
-			got, err := extractPlusAddressTag(tt.email)
+			got, err := ExtractPlusAddress(tt.email)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("ExtractPlusAddressTag(%q) error = %v, wantErr %v", tt.email, err, tt.wantErr)
 				return

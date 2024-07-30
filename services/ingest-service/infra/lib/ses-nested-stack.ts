@@ -46,11 +46,11 @@ export class SESNestedStack extends NestedStack {
         runtime: lambda.Runtime.PROVIDED_AL2023,
         handler: "bootstrap",
         code: lambda.Code.fromAsset(
-          path.join(__dirname, "../../bin/enqueue-report")
+          path.join(__dirname, "../../bin/enqueue-mail")
         ),
         environment: {
-          QUEUE_URL: rawEmailQueue.queueUrl,
-          BUCKET_NAME: rawEmailBucket.bucketName,
+          RAW_EMAIL_QUEUE_URL: rawEmailQueue.queueUrl,
+          REPORT_STORAGE_BUCKET_NAME: rawEmailBucket.bucketName,
         },
       }
     );

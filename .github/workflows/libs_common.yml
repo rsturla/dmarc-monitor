@@ -1,4 +1,4 @@
-name: libs/dmarc
+name: libs/common
 
 on:
   push:
@@ -8,7 +8,7 @@ on:
     branches:
       - main
     paths:
-      - libs/dmarc/**
+      - libs/common/**
   merge_group:
   workflow_dispatch:
 
@@ -21,4 +21,4 @@ jobs:
   ci:
     uses: ./.github/workflows/_ci.yml
     with:
-      working-directory: ./libs/dmarc
+      working-directory: ./libs/common

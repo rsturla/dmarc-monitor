@@ -37,12 +37,10 @@ export class ExtractReportNestedStack extends NestedStack {
         runtime: lambda.Runtime.PROVIDED_AL2023,
         handler: "bootstrap",
         code: lambda.Code.fromAsset(
-          path.join(__dirname, "../../bin/extract-report")
+          path.join(__dirname, "../../bin/extract-mail-attachment")
         ),
         environment: {
-          QUEUE_URL: rawEmailQueue.queueUrl,
-          BUCKET_NAME: rawEmailBucket.bucketName,
-          DYNAMODB_TABLE_NAME: "DMARCReportTable",
+          REPORT_STORAGE_BUCKET_NAME: rawEmailBucket.bucketName,
         },
       }
     );

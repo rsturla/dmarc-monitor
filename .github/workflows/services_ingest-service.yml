@@ -1,0 +1,24 @@
+name: services/ingest-service
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+    paths:
+      - services/ingest-service/**
+  merge_group:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: read
+  checks: write
+
+jobs:
+  ci:
+    uses: ./.github/workflows/_ci.yml
+    with:
+      working-directory: ./services/ingest-service
