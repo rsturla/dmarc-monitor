@@ -29,9 +29,22 @@ type SQSMessage struct {
 	Tag          string `json:"tag"`
 }
 
-// Handler function for AWS Lambda
+func main() {
+	if os.Getenv("AWS_LAMBDA_RUNTIME_API") == "" {
+		event, ctx, err := awslocal.CreateLocalEvent[events.SQSEvent]("./sample-events/SQSEvent.json")
+		if err != nil {
+			log.Printf("Error creating local event: %v\n", err)
+		}
+		if err := handler(ctx, event); err != nil {
+			log.Printf("Error processing local event: %v\n", err)
+		}
+	} else {
+		lambda.Start(handler)
+	}
+}
+
 func handler(ctx context.Context, sqsEvent events.SQSEvent) error {
-	config, err := config.NewConfig()
+	config, err := config.NewConfig[Config]()
 	if err != nil {
 		return fmt.Errorf("error loading configuration: %w", err)
 	}
@@ -50,22 +63,7 @@ func handler(ctx context.Context, sqsEvent events.SQSEvent) error {
 	return nil
 }
 
-// Main entry point
-func main() {
-	if os.Getenv("AWS_LAMBDA_RUNTIME_API") == "" {
-		event, ctx, err := awslocal.CreateLocalEvent[events.SQSEvent]("./sample-events/SQSEvent.json")
-		if err != nil {
-			log.Printf("Error creating local event: %v\n", err)
-		}
-		if err := handler(ctx, event); err != nil {
-			log.Printf("Error processing local event: %v\n", err)
-		}
-	} else {
-		lambda.Start(handler)
-	}
-}
-
-func processRecord(ctx context.Context, awsClient *aws.AWSClient, config *config.Config, record events.SQSMessage) error {
+func processRecord(ctx context.Context, awsClient *aws.AWSClient, config *Config, record events.SQSMessage) error {
 	var sqsMessage SQSMessage
 	if err := json.Unmarshal([]byte(record.Body), &sqsMessage); err != nil {
 		return fmt.Errorf("error unmarshalling message: %w", err)
@@ -112,7 +110,7 @@ func getAttachmentData(attachment *message.Attachment) ([]byte, error) {
 	return uncompressed, nil
 }
 
-func saveReport(ctx context.Context, awsClient *aws.AWSClient, config *config.Config, messageID string, tenantId string, data []byte) error {
+func saveReport(ctx context.Context, awsClient *aws.AWSClient, config *Config, messageID string, tenantId string, data []byte) error {
 	s3Key := fmt.Sprintf("reports/%s/%s/%s.xml", tenantId, time.Now().Format("2006/01/02"), messageID)
 	contentType := "application/xml"
 	_, err := awsClient.S3.PutObject(ctx, &s3.PutObjectInput{

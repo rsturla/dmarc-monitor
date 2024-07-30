@@ -6,15 +6,9 @@ import (
 	"reflect"
 )
 
-type Config struct {
-	ReportStorageBucketName string `env:"REPORT_STORAGE_BUCKET_NAME"`
-	RawEmailQueueURL        string `env:"RAW_EMAIL_QUEUE_URL"`
-	AttachmentQueueURL      string `env:"ATTACHMENT_QUEUE_URL"`
-}
-
 // NewConfig retrieves all required environment variables and returns a Config struct.
-func NewConfig() (*Config, error) {
-	config := &Config{}
+func NewConfig[T any]() (*T, error) {
+	config := new(T)
 	v := reflect.ValueOf(config).Elem()
 	typeOfConfig := v.Type()
 
