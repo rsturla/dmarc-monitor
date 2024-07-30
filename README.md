@@ -1,4 +1,4 @@
-# dmarc-monitor
+# DMARC Monitor
 
 A serverless-first application designed to help organizations monitor their DMARC records and reports.
 
