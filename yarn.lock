@@ -85,7 +85,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/node@npm:^22.0.0":
+"@types/node@npm:22.0.0":
   version: 22.0.0
   resolution: "@types/node@npm:22.0.0"
   dependencies:
@@ -169,7 +169,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"aws-cdk-lib@npm:2.150.0, aws-cdk-lib@npm:^2.150.0":
+"aws-cdk-lib@npm:2.150.0":
   version: 2.150.0
   resolution: "aws-cdk-lib@npm:2.150.0"
   dependencies:
@@ -264,10 +264,10 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "cdk-constructs@workspace:libs/cdk-constructs"
   dependencies:
-    "@types/node": "npm:^22.0.0"
-    aws-cdk-lib: "npm:^2.150.0"
-    constructs: "npm:^10.3.0"
-    typescript: "npm:^5.5.4"
+    "@types/node": "npm:22.0.0"
+    aws-cdk-lib: "npm:2.150.0"
+    constructs: "npm:10.3.0"
+    typescript: "npm:5.5.4"
   languageName: unknown
   linkType: soft
 
@@ -308,7 +308,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"constructs@npm:10.3.0, constructs@npm:^10.3.0":
+"constructs@npm:10.3.0":
   version: 10.3.0
   resolution: "constructs@npm:10.3.0"
   checksum: 10c0/be93ff934f28f2226a674dc18cd608dc7543e2cd6e17e4fbbb55faf80a5ab30b5346bdb18f266ea9b9192438debaafa0b65cad09d67a33a9f84fd8919200ee79
@@ -1081,7 +1081,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"typescript@npm:^5.5.4":
+"typescript@npm:5.5.4":
   version: 5.5.4
   resolution: "typescript@npm:5.5.4"
   bin:
@@ -1091,7 +1091,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"typescript@patch:typescript@npm%3A^5.5.4#optional!builtin<compat/typescript>":
+"typescript@patch:typescript@npm%3A5.5.4#optional!builtin<compat/typescript>":
   version: 5.5.4
   resolution: "typescript@patch:typescript@npm%3A5.5.4#optional!builtin<compat/typescript>::version=5.5.4&hash=379a07"
   bin:
