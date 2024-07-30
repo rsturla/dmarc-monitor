@@ -375,7 +375,7 @@ type headerParser struct {
 	err    error
 }
 
-func (hp headerParser) parseAddress(s string) (ma *mail.Address) {
+func (hp *headerParser) parseAddress(s string) (ma *mail.Address) {
 	if hp.err != nil {
 		return nil
 	}
@@ -389,7 +389,7 @@ func (hp headerParser) parseAddress(s string) (ma *mail.Address) {
 	return nil
 }
 
-func (hp headerParser) parseAddressList(s string) (ma []*mail.Address) {
+func (hp *headerParser) parseAddressList(s string) (ma []*mail.Address) {
 	if hp.err != nil {
 		return
 	}
