@@ -4,7 +4,7 @@ import * as sqs from "aws-cdk-lib/aws-sqs";
 import * as lambda from "aws-cdk-lib/aws-lambda";
 import * as iam from "aws-cdk-lib/aws-iam";
 import { Construct } from "constructs";
-import path from "path";
+import * as path from "path";
 import { EmailIdentity, Identity, ReceiptRuleSet } from "aws-cdk-lib/aws-ses";
 import {
   AwsCustomResource,
@@ -21,6 +21,12 @@ export interface SESNestedStackProps extends NestedStackProps {
 }
 
 export class SESNestedStack extends NestedStack {
+  private static readonly RAW_EMAIL_S3_PREFIX = "raw/";
+  private static readonly LAMBDA_HANDLER = "bootstrap";
+  private static readonly LAMBDA_RUNTIME = lambda.Runtime.PROVIDED_AL2023;
+  private static readonly ENQUEUE_EMAIL_LAMBDA_CODE_PATH =
+    "../../bin/enqueue-email";
+
   constructor(scope: Construct, id: string, props: SESNestedStackProps) {
     super(scope, id, props);
 
@@ -52,6 +58,80 @@ export class SESNestedStack extends NestedStack {
       receiptRuleSet
     );
 
+    // Create and attach S3 bucket policy for SES to put emails
+    this.attachIngestBucketPolicy(ingestStorageBucket, receiptRuleSet);
+
+    // Create receipt rule for processing incoming emails
+    this.createReceiptRule(
+      receiptRuleSet,
+      props.receiverDomain,
+      ingestStorageBucket,
+      enqueueEmailFunction
+    );
+
+    // Ensure the receipt rule set is active
+    this.createSetActiveReceiptRuleSetCustomResource(
+      receiptRuleSet.receiptRuleSetName
+    );
+  }
+
+  private createEnqueueEmailFunction(
+    rawEmailQueue: sqs.IQueue,
+    ingestStorageBucket: s3.IBucket,
+    receiptRuleSet: ReceiptRuleSet
+  ): lambda.Function {
+    const enqueueEmailFunction = new lambda.Function(
+      this,
+      "EnqueueEmailFunction",
+      {
+        runtime: SESNestedStack.LAMBDA_RUNTIME,
+        handler: SESNestedStack.LAMBDA_HANDLER,
+        code: lambda.Code.fromAsset(
+          path.join(__dirname, SESNestedStack.ENQUEUE_EMAIL_LAMBDA_CODE_PATH)
+        ),
+        environment: {
+          RAW_EMAIL_QUEUE_URL: rawEmailQueue.queueUrl,
+          INGEST_STORAGE_BUCKET_NAME: ingestStorageBucket.bucketName,
+          RAW_EMAIL_S3_PREFIX: SESNestedStack.RAW_EMAIL_S3_PREFIX,
+        },
+      }
+    );
+
+    enqueueEmailFunction.addToRolePolicy(
+      new iam.PolicyStatement({
+        actions: ["s3:GetObject"],
+        resources: [
+          `${ingestStorageBucket.bucketArn}/${SESNestedStack.RAW_EMAIL_S3_PREFIX}*`,
+        ],
+      })
+    );
+
+    enqueueEmailFunction.addToRolePolicy(
+      new iam.PolicyStatement({
+        actions: ["sqs:SendMessage"],
+        resources: [rawEmailQueue.queueArn],
+      })
+    );
+
+    enqueueEmailFunction.addPermission("SESInvokePermission", {
+      principal: new iam.ServicePrincipal("ses.amazonaws.com"),
+      sourceArn: `arn:aws:ses:${this.region}:${this.account}:receipt-rule-set/${receiptRuleSet.receiptRuleSetName}:receipt-rule/*`,
+      sourceAccount: this.account,
+    });
+
+    return enqueueEmailFunction;
+  }
+
+  private createReceiptRuleSet(): ReceiptRuleSet {
+    return new ReceiptRuleSet(this, "ReceiptRuleSet", {
+      dropSpam: false,
+    });
+  }
+
+  private attachIngestBucketPolicy(
+    ingestStorageBucket: s3.IBucket,
+    receiptRuleSet: ReceiptRuleSet
+  ): void {
     const ingestStorageBucketPolicy = new s3.BucketPolicy(
       this,
       "RawEmailBucketPolicy",
@@ -66,14 +146,21 @@ export class SESNestedStack extends NestedStack {
         ingestStorageBucket.bucketArn
       )
     );
+  }
 
+  private createReceiptRule(
+    receiptRuleSet: ReceiptRuleSet,
+    receiverDomain: string,
+    ingestStorageBucket: s3.IBucket,
+    enqueueEmailFunction: lambda.Function
+  ): void {
     const receiptRule = receiptRuleSet.addRule("IngestRule", {
-      recipients: [props.receiverDomain],
+      recipients: [receiverDomain],
       enabled: true,
       actions: [
         new aws_ses_actions.S3({
           bucket: ingestStorageBucket,
-          objectKeyPrefix: "raw/",
+          objectKeyPrefix: SESNestedStack.RAW_EMAIL_S3_PREFIX,
         }),
         new aws_ses_actions.Lambda({
           function: enqueueEmailFunction,
@@ -81,62 +168,7 @@ export class SESNestedStack extends NestedStack {
       ],
     });
 
-    this.createSetActiveReceiptRuleSetCustomResource(
-      receiptRuleSet.receiptRuleSetName
-    );
-
-    receiptRule.node.addDependency(ingestStorageBucketPolicy);
-  }
-
-  private createEnqueueEmailFunction(
-    rawEmailQueue: sqs.IQueue,
-    ingestStorageBucket: s3.IBucket,
-    receiptRuleSet: ReceiptRuleSet
-  ) {
-    const enqueueEmailFuncton = new lambda.Function(
-      this,
-      "EnqueueEmailFunction",
-      {
-        runtime: lambda.Runtime.PROVIDED_AL2023,
-        handler: "bootstrap",
-        code: lambda.Code.fromAsset(
-          path.join(__dirname, "../../bin/enqueue-email")
-        ),
-        environment: {
-          RAW_EMAIL_QUEUE_URL: rawEmailQueue.queueUrl,
-          INGEST_STORAGE_BUCKET_NAME: ingestStorageBucket.bucketName,
-          RAW_EMAIL_S3_PREFIX: "raw/",
-        },
-      }
-    );
-
-    enqueueEmailFuncton.addToRolePolicy(
-      new iam.PolicyStatement({
-        actions: ["s3:GetObject"],
-        resources: [`${ingestStorageBucket.bucketArn}/raw/*`],
-      })
-    );
-
-    enqueueEmailFuncton.addToRolePolicy(
-      new iam.PolicyStatement({
-        actions: ["sqs:SendMessage"],
-        resources: [rawEmailQueue.queueArn],
-      })
-    );
-
-    enqueueEmailFuncton.addPermission("SESInvokePermission", {
-      principal: new iam.ServicePrincipal("ses.amazonaws.com"),
-      sourceArn: `arn:aws:ses:${this.region}:${this.account}:receipt-rule-set/${receiptRuleSet.receiptRuleSetName}:receipt-rule/*`,
-      sourceAccount: this.account,
-    });
-
-    return enqueueEmailFuncton;
-  }
-
-  private createReceiptRuleSet() {
-    return new ReceiptRuleSet(this, "ReceiptRuleSet", {
-      dropSpam: false,
-    });
+    receiptRule.node.addDependency(ingestStorageBucket.policy!);
   }
 
   private createSetActiveReceiptRuleSetCustomResource(
@@ -165,8 +197,6 @@ export class SESNestedStack extends NestedStack {
       installLatestAwsSdk: true,
       policy: AwsCustomResourcePolicy.fromStatements([
         new iam.PolicyStatement({
-          sid: "SesCustomResourceSetActiveReceiptRuleSet",
-          effect: iam.Effect.ALLOW,
           actions: ["ses:SetActiveReceiptRuleSet"],
           resources: ["*"],
         }),
@@ -181,7 +211,6 @@ export class SESNestedStack extends NestedStack {
     const { account, region } = NestedStack.of(this);
 
     return new iam.PolicyStatement({
-      sid: "AllowSESPuts",
       actions: ["s3:PutObject"],
       resources: [`${bucketArn}/*`],
       principals: [new iam.ServicePrincipal("ses.amazonaws.com")],
