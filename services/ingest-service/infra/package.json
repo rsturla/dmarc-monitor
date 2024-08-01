@@ -8,6 +8,7 @@
     "@types/node": "20.14.13",
     "aws-cdk": "2.150.0",
     "aws-cdk-lib": "2.150.0",
+    "cdk-constructs": "workspace:^",
     "constructs": "10.3.0"
   }
 }

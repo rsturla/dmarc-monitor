@@ -260,7 +260,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"cdk-constructs@workspace:libs/cdk-constructs":
+"cdk-constructs@workspace:^, cdk-constructs@workspace:libs/cdk-constructs":
   version: 0.0.0-use.local
   resolution: "cdk-constructs@workspace:libs/cdk-constructs"
   dependencies:
@@ -554,6 +554,7 @@ __metadata:
     "@types/node": "npm:20.14.13"
     aws-cdk: "npm:2.150.0"
     aws-cdk-lib: "npm:2.150.0"
+    cdk-constructs: "workspace:^"
     constructs: "npm:10.3.0"
   languageName: unknown
   linkType: soft

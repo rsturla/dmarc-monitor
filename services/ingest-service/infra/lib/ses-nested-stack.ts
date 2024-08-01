@@ -38,15 +38,15 @@ export class SESNestedStack extends NestedStack {
       props.rawEmailQueueArn
     );
 
-    // Create Lambda function to process incoming emails (../../bin/enqueue-reports)
-    const enqueueRawEmailFunction = new lambda.Function(
+    // Create Lambda function to process incoming emails (../../bin/enqueue-email)
+    const enqueueEmailFunction = new lambda.Function(
       this,
-      "EnqueueRawEmailFunction",
+      "EnqueueEmailFunction",
       {
         runtime: lambda.Runtime.PROVIDED_AL2023,
         handler: "bootstrap",
         code: lambda.Code.fromAsset(
-          path.join(__dirname, "../../bin/enqueue-mail")
+          path.join(__dirname, "../../bin/enqueue-email")
         ),
         environment: {
           RAW_EMAIL_QUEUE_URL: rawEmailQueue.queueUrl,
@@ -56,7 +56,7 @@ export class SESNestedStack extends NestedStack {
     );
 
     // Add permissions to HeadObject on raw/ prefix in the bucket
-    enqueueRawEmailFunction.addToRolePolicy(
+    enqueueEmailFunction.addToRolePolicy(
       new PolicyStatement({
         actions: ["s3:GetObject"],
         resources: [`${rawEmailBucket.bucketArn}/raw/*`],
@@ -64,8 +64,8 @@ export class SESNestedStack extends NestedStack {
     );
 
     // Add permissions to send messages to the queue and to send messages to the queue
-    rawEmailQueue.grantSendMessages(enqueueRawEmailFunction);
-    enqueueRawEmailFunction.role?.addManagedPolicy;
+    rawEmailQueue.grantSendMessages(enqueueEmailFunction);
+    enqueueEmailFunction.role?.addManagedPolicy;
 
     // Create the email identity
     new EmailIdentity(this, "IngestServiceIdentity", {
@@ -77,7 +77,7 @@ export class SESNestedStack extends NestedStack {
       dropSpam: false,
     });
 
-    enqueueRawEmailFunction.addPermission("SESInvokeLambdaPermission", {
+    enqueueEmailFunction.addPermission("SESInvokeLambdaPermission", {
       principal: new ServicePrincipal("ses.amazonaws.com"),
       sourceArn: `arn:aws:ses:${this.region}:${this.account}:receipt-rule-set/${receiptRuleSet.receiptRuleSetName}:receipt-rule/*`,
       sourceAccount: this.account,
@@ -107,7 +107,7 @@ export class SESNestedStack extends NestedStack {
           objectKeyPrefix: "raw/",
         }),
         new actions.Lambda({
-          function: enqueueRawEmailFunction,
+          function: enqueueEmailFunction,
         }),
       ],
     });
