@@ -68,6 +68,20 @@ export class StatelessStack extends cdk.Stack {
         RAW_EMAIL_QUEUE_URL: rawEmailQueue.queueUrl,
       }
     );
+    const enqueueEmailFunctionPolicies: iam.PolicyStatement[] = [
+      new iam.PolicyStatement({
+        actions: ["sqs:SendMessage"],
+        resources: [rawEmailQueue.queueArn],
+      }),
+      new iam.PolicyStatement({
+        actions: ["s3:GetObject"],
+        resources: [`${ingestStorageBucket.bucketArn}/raw/*`],
+      }),
+    ];
+    this.attachLambdaPolicies(
+      enqueueEmailFunction,
+      enqueueEmailFunctionPolicies
+    );
 
     // Create a receipt rule for processing incoming emails
     const receiptRule = new ses.ReceiptRule(this, "ReceiptRule", {
