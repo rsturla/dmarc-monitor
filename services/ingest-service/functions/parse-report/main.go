@@ -133,6 +133,15 @@ func createDmarcReportEntry(sqsMessage models.IngestSQSMessage, ruaReport *rua.R
 func createDmarcRecordEntries(dmarcReportEntry models.DmarcReportEntry, ruaReport *rua.RUA) []models.DmarcRecordEntry {
 	var dmarcRecordEntries []models.DmarcRecordEntry
 	for i, record := range ruaReport.Records {
+		var authResultsDkim []models.DmarcAuthResultNestedAttribute
+		for _, dkim := range record.AuthResults.Dkim {
+			authResultsDkim = append(authResultsDkim, models.DmarcAuthResultNestedAttribute{
+				Domain:   dkim.Domain,
+				Result:   dkim.Result,
+				Selector: dkim.Selector,
+			})
+		}
+
 		dmarcRecordEntries = append(dmarcRecordEntries, models.DmarcRecordEntry{
 			ID:                         fmt.Sprintf("%s#%d", dmarcReportEntry.ID, i),
 			ReportID:                   dmarcReportEntry.ReportID,
@@ -142,8 +151,11 @@ func createDmarcRecordEntries(dmarcReportEntry models.DmarcReportEntry, ruaRepor
 			PolicyEvaluatedDkim:        record.Row.PolicyEvaluated.Dkim,
 			PolicyEvaluatedSpf:         record.Row.PolicyEvaluated.Spf,
 			HeaderFrom:                 record.Identifiers.HeaderFrom,
-			AuthResultsDkim:            record.Row.PolicyEvaluated.Dkim,
-			AuthResultsSpf:             record.Row.PolicyEvaluated.Spf,
+			AuthResultsDkim:            authResultsDkim,
+			AuthResultsSpf: models.DmarcAuthResultNestedAttribute{
+				Domain: record.AuthResults.Spf.Domain,
+				Result: record.AuthResults.Spf.Result,
+			},
 		})
 	}
 	return dmarcRecordEntries

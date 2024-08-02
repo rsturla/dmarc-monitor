@@ -25,14 +25,20 @@ type DmarcReportEntry struct {
 }
 
 type DmarcRecordEntry struct {
-	ID                         string `dynamodbav:"id"`
-	ReportID                   string `dynamodbav:"reportID"`
-	SourceIp                   string `dynamodbav:"sourceIp"`
-	Count                      int    `dynamodbav:"count"`
-	PolicyEvaluatedDisposition string `dynamodbav:"policyEvaluatedDisposition"`
-	PolicyEvaluatedDkim        string `dynamodbav:"policyEvaluatedDkim"`
-	PolicyEvaluatedSpf         string `dynamodbav:"policyEvaluatedSpf"`
-	HeaderFrom                 string `dynamodbav:"headerFrom"`
-	AuthResultsDkim            string `dynamodbav:"authResultsDkim"`
-	AuthResultsSpf             string `dynamodbav:"authResultsSpf"`
+	ID                         string                           `dynamodbav:"id"`
+	ReportID                   string                           `dynamodbav:"reportID"`
+	SourceIp                   string                           `dynamodbav:"sourceIp"`
+	Count                      int                              `dynamodbav:"count"`
+	PolicyEvaluatedDisposition string                           `dynamodbav:"policyEvaluatedDisposition"`
+	PolicyEvaluatedDkim        string                           `dynamodbav:"policyEvaluatedDkim"`
+	PolicyEvaluatedSpf         string                           `dynamodbav:"policyEvaluatedSpf"`
+	HeaderFrom                 string                           `dynamodbav:"headerFrom"`
+	AuthResultsDkim            []DmarcAuthResultNestedAttribute `dynamodbav:"authResultsDkim"`
+	AuthResultsSpf             DmarcAuthResultNestedAttribute   `dynamodbav:"authResultsSpf"`
+}
+
+type DmarcAuthResultNestedAttribute struct {
+	Domain   string `dynamodbav:"domain"`
+	Result   string `dynamodbav:"result"`
+	Selector string `dynamodbav:"selector"`
 }
