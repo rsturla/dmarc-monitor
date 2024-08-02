@@ -13,6 +13,7 @@ import (
 	"github.com/rsturla/dmarc-monitor/services/ingest-service/pkg/aws/awslocal"
 	"github.com/rsturla/dmarc-monitor/services/ingest-service/pkg/config"
 	"github.com/rsturla/dmarc-monitor/services/ingest-service/pkg/message"
+	"github.com/rsturla/dmarc-monitor/services/ingest-service/pkg/models"
 )
 
 func main() {
@@ -55,12 +56,11 @@ func processEmail(ctx context.Context, awsClient *aws.AWSClient, config *Config,
 		return fmt.Errorf("error extracting tag from recipient email address: %w", err)
 	}
 
-	messageJSON, err := json.Marshal(map[string]string{
-		"tag":          recipientTag,
-		"s3BucketName": config.ReportStorageBucketName,
-		"s3ObjectPath": fmt.Sprintf("%s%s", "raw/", mail.MessageID),
-		"receivedTime": fmt.Sprintf("%d", mail.Timestamp.Unix()),
-		"messageID":    mail.MessageID,
+	messageJSON, err := json.Marshal(models.IngestSQSMessage{
+		TenantID:     recipientTag,
+		S3ObjectPath: fmt.Sprintf("%s%s", "raw/", mail.MessageID),
+		Timestamp:    fmt.Sprintf("%d", mail.Timestamp.Unix()),
+		MessageID:    mail.MessageID,
 	})
 	if err != nil {
 		return fmt.Errorf("error marshalling message to JSON: %w", err)
