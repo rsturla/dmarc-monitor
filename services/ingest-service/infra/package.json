@@ -1,6 +1,6 @@
 {
   "name": "ingest-service-infra",
-  "packageManager": "yarn@4.3.1",
+  "packageManager": "yarn@4.4.0",
   "scripts": {
     "cdk": "cdk"
   },
