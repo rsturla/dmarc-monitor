@@ -12,6 +12,7 @@ export class StatefulStack extends Stack {
   public readonly attachmentQueue: SQSQueue;
   public readonly dmarcReportQueue: SQSQueue;
   public readonly dmarcReportTable: DynamoDBTable;
+  public readonly dmarcRecordTable: DynamoDBTable;
 
   constructor(scope: Construct, id: string, props?: StackProps) {
     super(scope, id, props);
@@ -78,11 +79,18 @@ export class StatefulStack extends Stack {
         type: AttributeType.STRING,
       },
     });
+    const dmarcRecordTable = new DynamoDBTable(this, "DmarcRecordTable", {
+      partitionKey: {
+        name: "id",
+        type: AttributeType.STRING,
+      },
+    });
 
     this.ingestStorageBucket = ingestStorageBucket;
     this.rawEmailQueue = rawEmailQueue;
     this.attachmentQueue = attachmentQueue;
     this.dmarcReportQueue = dmarcReportQueue;
     this.dmarcReportTable = dmarcReportTable;
+    this.dmarcRecordTable = dmarcRecordTable;
   }
 }

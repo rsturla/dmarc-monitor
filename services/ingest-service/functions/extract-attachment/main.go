@@ -18,16 +18,8 @@ import (
 	"github.com/rsturla/dmarc-monitor/services/ingest-service/pkg/compress"
 	"github.com/rsturla/dmarc-monitor/services/ingest-service/pkg/config"
 	"github.com/rsturla/dmarc-monitor/services/ingest-service/pkg/message"
+	"github.com/rsturla/dmarc-monitor/services/ingest-service/pkg/models"
 )
-
-type SQSMessage struct {
-	MessageId    string `json:"messageID"`
-	S3BucketName string `json:"s3BucketName"`
-	S3ObjectPath string `json:"s3ObjectPath"`
-	S3ObjectFull string `json:"s3BucketFull"`
-	ReceivedTime string `json:"receivedTime"`
-	Tag          string `json:"tag"`
-}
 
 func main() {
 	if os.Getenv("AWS_LAMBDA_RUNTIME_API") == "" {
@@ -64,14 +56,14 @@ func handler(ctx context.Context, sqsEvent events.SQSEvent) error {
 }
 
 func processRecord(ctx context.Context, awsClient *aws.AWSClient, config *Config, record events.SQSMessage) error {
-	var sqsMessage SQSMessage
+	var sqsMessage models.IngestSQSMessage
 	if err := json.Unmarshal([]byte(record.Body), &sqsMessage); err != nil {
 		return fmt.Errorf("error unmarshalling message: %w", err)
 	}
 
-	log.Printf("Processing message: %s\n", sqsMessage.MessageId)
+	log.Printf("Processing message: %s\n", sqsMessage.MessageID)
 
-	body, err := awsClient.GetS3Object(ctx, sqsMessage.S3BucketName, sqsMessage.S3ObjectPath)
+	body, err := awsClient.GetS3Object(ctx, config.ReportStorageBucketName, sqsMessage.S3ObjectPath)
 	if err != nil {
 		return err
 	}
@@ -88,8 +80,23 @@ func processRecord(ctx context.Context, awsClient *aws.AWSClient, config *Config
 		}
 
 		// Save the report to the S3 bucket - under the reports/<message> key
-		if err := saveReport(ctx, awsClient, config, sqsMessage.MessageId, sqsMessage.Tag, data); err != nil {
+		s3ObjectPath, err := saveReport(ctx, awsClient, config, sqsMessage.MessageID, sqsMessage.TenantID, data)
+		if err != nil {
 			return fmt.Errorf("error saving report: %w", err)
+		}
+
+		messageJSON, err := json.Marshal(models.IngestSQSMessage{
+			TenantID:     sqsMessage.TenantID,
+			S3ObjectPath: s3ObjectPath,
+			Timestamp:    sqsMessage.Timestamp,
+			MessageID:    sqsMessage.MessageID,
+		})
+		if err != nil {
+			return fmt.Errorf("error marshalling message: %w", err)
+		}
+
+		if err := awsClient.PublishSQSMessage(ctx, config.ReportQueueURL, string(messageJSON)); err != nil {
+			return fmt.Errorf("error publishing message to SQS: %w", err)
 		}
 	}
 
@@ -110,7 +117,7 @@ func getAttachmentData(attachment *message.Attachment) ([]byte, error) {
 	return uncompressed, nil
 }
 
-func saveReport(ctx context.Context, awsClient *aws.AWSClient, config *Config, messageID string, tenantId string, data []byte) error {
+func saveReport(ctx context.Context, awsClient *aws.AWSClient, config *Config, messageID string, tenantId string, data []byte) (string, error) {
 	s3Key := fmt.Sprintf("reports/%s/%s/%s.xml", tenantId, time.Now().Format("2006/01/02"), messageID)
 	contentType := "application/xml"
 	_, err := awsClient.S3.PutObject(ctx, &s3.PutObjectInput{
@@ -120,8 +127,8 @@ func saveReport(ctx context.Context, awsClient *aws.AWSClient, config *Config, m
 		ContentType: &contentType,
 	})
 	if err != nil {
-		return fmt.Errorf("error saving report to S3: %w", err)
+		return "", fmt.Errorf("error saving report to S3: %w", err)
 	}
 
-	return nil
+	return s3Key, nil
 }

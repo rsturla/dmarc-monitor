@@ -5,11 +5,13 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
+	dynamodbTypes "github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
-	"github.com/aws/aws-sdk-go-v2/service/s3/types"
+	s3Types "github.com/aws/aws-sdk-go-v2/service/s3/types"
 	"github.com/aws/aws-sdk-go-v2/service/sqs"
 )
 
@@ -40,7 +42,7 @@ func (c *AWSClient) S3ObjectExists(ctx context.Context, bucket, key string) (boo
 		Key:    &key,
 	})
 	if err != nil {
-		var notFoundErr *types.NotFound
+		var notFoundErr *s3Types.NotFound
 		if errors.As(err, &notFoundErr) {
 			return false, nil
 		}
@@ -73,4 +75,49 @@ func (c *AWSClient) GetS3Object(ctx context.Context, bucket, key string) ([]byte
 	defer obj.Body.Close()
 
 	return io.ReadAll(obj.Body)
+}
+
+func (c *AWSClient) PutDynamoDbItem(ctx context.Context, tableName string, item *map[string]dynamodbTypes.AttributeValue) error {
+	_, err := c.DynamoDb.PutItem(ctx, &dynamodb.PutItemInput{
+		TableName: &tableName,
+		Item:      *item,
+	})
+	if err != nil {
+		return fmt.Errorf("error putting item to DynamoDB table %s: %w", tableName, err)
+	}
+
+	return nil
+}
+
+func (c *AWSClient) PutDynamoDbBatchItems(ctx context.Context, tableName string, items []map[string]dynamodbTypes.AttributeValue) error {
+	var writeRequests []dynamodbTypes.WriteRequest
+
+	for _, item := range items {
+		// Check if item is not empty and contains required fields
+		if len(item) == 0 {
+			return fmt.Errorf("missing required fields in item: %v", item)
+		}
+
+		writeRequests = append(writeRequests, dynamodbTypes.WriteRequest{
+			PutRequest: &dynamodbTypes.PutRequest{
+				Item: item,
+			},
+		})
+		log.Printf("writeRequests: %v\n", writeRequests)
+	}
+
+	if len(writeRequests) == 0 {
+		return fmt.Errorf("no valid items to write")
+	}
+
+	_, err := c.DynamoDb.BatchWriteItem(ctx, &dynamodb.BatchWriteItemInput{
+		RequestItems: map[string][]dynamodbTypes.WriteRequest{
+			tableName: writeRequests,
+		},
+	})
+	if err != nil {
+		return fmt.Errorf("error putting batch items to DynamoDB table %s: %w", tableName, err)
+	}
+
+	return nil
 }

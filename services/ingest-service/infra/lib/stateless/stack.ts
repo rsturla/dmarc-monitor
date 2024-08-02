@@ -15,8 +15,8 @@ export interface StatelessStackProps extends cdk.StackProps {
   readonly receiverDomain: string;
   readonly rawEmailQueueArn: string;
   readonly attachmentQueueArn: string;
-  readonly dmarcReportQueueArn: string;
   readonly dmarcReportTableName: string;
+  readonly dmarcRecordTableName: string;
 }
 
 export class StatelessStack extends cdk.Stack {
@@ -26,8 +26,8 @@ export class StatelessStack extends cdk.Stack {
     const ingestStorageBucket = this.getS3Bucket(props.ingestStorageBucketName);
     const rawEmailQueue = this.getSQSQueue(props.rawEmailQueueArn);
     const attachmentQueue = this.getSQSQueue(props.attachmentQueueArn);
-    const dmarcReportQueue = this.getSQSQueue(props.dmarcReportQueueArn);
     const dmarcReportTable = this.getDynamoDBTable(props.dmarcReportTableName);
+    const dmarcRecordTable = this.getDynamoDBTable(props.dmarcRecordTableName);
 
     // Create SES identity to for SES to establish trust with
     new ses.EmailIdentity(this, "EmailIdentity", {
@@ -108,17 +108,15 @@ export class StatelessStack extends cdk.Stack {
       "../bin/extract-attachment",
       {
         INGEST_STORAGE_BUCKET_NAME: ingestStorageBucket.bucketName,
-        ATTACHMENT_QUEUE_URL: attachmentQueue.queueUrl,
+        INGEST_QUEUE_URL: attachmentQueue.queueUrl,
       }
     );
 
     extractAttachmentFunction.addEventSourceMapping("RawEmailEventSource", {
       eventSourceArn: rawEmailQueue.queueArn,
-      batchSize: 10,
-      maxBatchingWindow: cdk.Duration.seconds(60),
+      batchSize: 1,
+      // maxBatchingWindow: cdk.Duration.seconds(10),
     });
-
-    // Attach policies to the Lambda function to allow it to interact with S3 and SQS
     const extractAttachmentFunctionPolicies: iam.PolicyStatement[] = [
       new iam.PolicyStatement({
         actions: ["s3:GetObject"],
@@ -145,6 +143,42 @@ export class StatelessStack extends cdk.Stack {
       extractAttachmentFunction,
       extractAttachmentFunctionPolicies
     );
+
+    // Create a Lambda function to parse DMARC reports and store them in DynamoDB
+    const parseReportFunction = this.createLambdaFunction(
+      "ParseReportFunction",
+      "../bin/parse-report",
+      {
+        INGEST_STORAGE_BUCKET_NAME: ingestStorageBucket.bucketName,
+        INGEST_TABLE_NAME: dmarcReportTable.tableName,
+        INGEST_RECORD_TABLE_NAME: dmarcRecordTable.tableName,
+      }
+    );
+
+    parseReportFunction.addEventSourceMapping("ParseReportEventSource", {
+      eventSourceArn: attachmentQueue.queueArn,
+      batchSize: 1,
+      // maxBatchingWindow: cdk.Duration.seconds(10),
+    });
+    const parseReportFunctionPolicies: iam.PolicyStatement[] = [
+      new iam.PolicyStatement({
+        actions: ["s3:GetObject"],
+        resources: [`${ingestStorageBucket.bucketArn}/reports/*`],
+      }),
+      new iam.PolicyStatement({
+        actions: [
+          "sqs:DeleteMessage",
+          "sqs:GetQueueAttributes",
+          "sqs:ReceiveMessage",
+        ],
+        resources: [attachmentQueue.queueArn],
+      }),
+      new iam.PolicyStatement({
+        actions: ["dynamodb:PutItem", "dynamodb:BatchWriteItem"],
+        resources: [dmarcReportTable.tableArn, dmarcRecordTable.tableArn],
+      }),
+    ];
+    this.attachLambdaPolicies(parseReportFunction, parseReportFunctionPolicies);
   }
 
   private getS3Bucket(bucketName: string): s3.IBucket {
