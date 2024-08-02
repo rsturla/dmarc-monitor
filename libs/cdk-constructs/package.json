@@ -2,7 +2,7 @@
   "name": "cdk-constructs",
   "packageManager": "yarn@4.3.1",
   "devDependencies": {
-    "@types/node": "22.0.2",
+    "@types/node": "22.1.0",
     "aws-cdk-lib": "2.150.0",
     "constructs": "10.3.0",
     "typescript": "5.5.4"
