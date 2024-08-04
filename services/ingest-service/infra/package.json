@@ -6,8 +6,8 @@
   },
   "devDependencies": {
     "@types/node": "20.14.14",
-    "aws-cdk": "2.150.0",
-    "aws-cdk-lib": "2.150.0",
+    "aws-cdk": "2.151.0",
+    "aws-cdk-lib": "2.151.0",
     "cdk-constructs": "workspace:^",
     "constructs": "10.3.0"
   }
