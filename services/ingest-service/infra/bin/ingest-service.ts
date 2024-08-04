@@ -12,6 +12,7 @@ new StatelessStack(app, `${appName}-StatelessStack`, {
   receiverDomain: process.env.RECEIVER_DOMAIN || "dm.sturla.tech",
   rawEmailQueueArn: statefulStack.rawEmailQueue.queueArn,
   attachmentQueueArn: statefulStack.attachmentQueue.queueArn,
+  dmarcReportQueueArn: statefulStack.dmarcReportQueue.queueArn,
   dmarcReportTableName: statefulStack.dmarcReportTable.tableName,
   dmarcRecordTableName: statefulStack.dmarcRecordTable.tableName,
 });

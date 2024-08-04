@@ -79,7 +79,30 @@ func processMessage(ctx context.Context, awsClient *aws.AWSClient, cfg *Config, 
 		return err
 	}
 
-	return storeReports(ctx, awsClient, cfg, sqsMessage, ruaReport)
+	reportId, err := storeReport(ctx, awsClient, cfg, sqsMessage, ruaReport)
+	if err != nil {
+		return err
+	}
+
+	log.Printf("Successfully processed message: %s, reportId: %s", sqsMessage.MessageID, reportId)
+
+	// Create a new SQS message to be sent to the next step in the pipeline
+	messageJSON, err := json.Marshal(models.IngestSQSMessage{
+		TenantID:          sqsMessage.TenantID,
+		S3ObjectPath:      sqsMessage.S3ObjectPath,
+		Timestamp:         sqsMessage.Timestamp,
+		MessageID:         sqsMessage.MessageID,
+		DynamoDBReportKey: reportId,
+	})
+	if err != nil {
+		return fmt.Errorf("error marshalling message: %w", err)
+	}
+
+	if err := awsClient.PublishSQSMessage(ctx, cfg.ReportQueueUrl, string(messageJSON)); err != nil {
+		return fmt.Errorf("error sending message to queue: %w", err)
+	}
+
+	return nil
 }
 
 // ParseRUAReport parses the XML body into a RUA report
@@ -93,20 +116,24 @@ func parseRUAReport(body []byte) (*rua.RUA, error) {
 }
 
 // StoreReports stores the DMARC reports and records in DynamoDB
-func storeReports(ctx context.Context, awsClient *aws.AWSClient, cfg *Config, sqsMessage models.IngestSQSMessage, ruaReport *rua.RUA) error {
+func storeReport(ctx context.Context, awsClient *aws.AWSClient, cfg *Config, sqsMessage models.IngestSQSMessage, ruaReport *rua.RUA) (string, error) {
 	dmarcReportEntry := createDmarcReportEntry(sqsMessage, ruaReport)
 	dmarcRecordEntries := createDmarcRecordEntries(dmarcReportEntry, ruaReport)
 
 	reportStorageObject, err := attributevalue.MarshalMap(dmarcReportEntry)
 	if err != nil {
-		return fmt.Errorf("error marshalling DmarcReportEntry: %w", err)
+		return "", fmt.Errorf("error marshalling DmarcReportEntry: %w", err)
 	}
 
 	if err := awsClient.PutDynamoDbItem(ctx, cfg.ReportTableName, &reportStorageObject); err != nil {
-		return fmt.Errorf("error putting DmarcReportEntry: %w", err)
+		return "", fmt.Errorf("error putting DmarcReportEntry: %w", err)
 	}
 
-	return storeDmarcRecordEntries(ctx, awsClient, cfg.RecordTableName, dmarcRecordEntries)
+	if err := storeDmarcRecordEntries(ctx, awsClient, cfg.RecordTableName, dmarcRecordEntries); err != nil {
+		return "", err
+	}
+
+	return dmarcReportEntry.ID, nil
 }
 
 // CreateDmarcReportEntry creates a DMARC report entry

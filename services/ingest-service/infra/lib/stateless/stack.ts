@@ -15,6 +15,7 @@ export interface StatelessStackProps extends cdk.StackProps {
   readonly receiverDomain: string;
   readonly rawEmailQueueArn: string;
   readonly attachmentQueueArn: string;
+  readonly dmarcReportQueueArn: string;
   readonly dmarcReportTableName: string;
   readonly dmarcRecordTableName: string;
 }
@@ -26,6 +27,7 @@ export class StatelessStack extends cdk.Stack {
     const ingestStorageBucket = this.getS3Bucket(props.ingestStorageBucketName);
     const rawEmailQueue = this.getSQSQueue(props.rawEmailQueueArn);
     const attachmentQueue = this.getSQSQueue(props.attachmentQueueArn);
+    const dmarcReportQueue = this.getSQSQueue(props.dmarcReportQueueArn);
     const dmarcReportTable = this.getDynamoDBTable(props.dmarcReportTableName);
     const dmarcRecordTable = this.getDynamoDBTable(props.dmarcRecordTableName);
 
@@ -152,6 +154,7 @@ export class StatelessStack extends cdk.Stack {
         INGEST_STORAGE_BUCKET_NAME: ingestStorageBucket.bucketName,
         INGEST_TABLE_NAME: dmarcReportTable.tableName,
         INGEST_RECORD_TABLE_NAME: dmarcRecordTable.tableName,
+        REPORT_QUEUE_URL: dmarcReportQueue.queueUrl,
       }
     );
 
@@ -172,6 +175,10 @@ export class StatelessStack extends cdk.Stack {
           "sqs:ReceiveMessage",
         ],
         resources: [attachmentQueue.queueArn],
+      }),
+      new iam.PolicyStatement({
+        actions: ["sqs:SendMessage"],
+        resources: [dmarcReportQueue.queueArn],
       }),
       new iam.PolicyStatement({
         actions: ["dynamodb:PutItem", "dynamodb:BatchWriteItem"],

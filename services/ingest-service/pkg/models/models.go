@@ -1,10 +1,11 @@
 package models
 
 type IngestSQSMessage struct {
-	TenantID     string `json:"tenantID"`
-	S3ObjectPath string `json:"s3ObjectPath"`
-	Timestamp    string `json:"timestamp"`
-	MessageID    string `json:"messageID"`
+	TenantID          string `json:"tenantID"`
+	S3ObjectPath      string `json:"s3ObjectPath"`
+	Timestamp         string `json:"timestamp"`
+	MessageID         string `json:"messageID"`
+	DynamoDBReportKey string `json:"dynamoDBReportKey"`
 }
 
 type DmarcReportEntry struct {
