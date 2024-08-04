@@ -47,7 +47,7 @@ func handler(ctx context.Context, sqsEvent events.SQSEvent) error {
 	}
 
 	for _, record := range sqsEvent.Records {
-		if err := processRecord(ctx, awsClient, config, record); err != nil {
+		if err := processMessage(ctx, awsClient, config, record); err != nil {
 			return fmt.Errorf("error processing message: %w", err)
 		}
 	}
@@ -55,7 +55,7 @@ func handler(ctx context.Context, sqsEvent events.SQSEvent) error {
 	return nil
 }
 
-func processRecord(ctx context.Context, awsClient *aws.AWSClient, config *Config, record events.SQSMessage) error {
+func processMessage(ctx context.Context, awsClient *aws.AWSClient, config *Config, record events.SQSMessage) error {
 	var sqsMessage models.IngestSQSMessage
 	if err := json.Unmarshal([]byte(record.Body), &sqsMessage); err != nil {
 		return fmt.Errorf("error unmarshalling message: %w", err)

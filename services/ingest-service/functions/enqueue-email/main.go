@@ -42,7 +42,7 @@ func handler(ctx context.Context, sesEvent events.SimpleEmailEvent) error {
 	}
 
 	for _, record := range sesEvent.Records {
-		if err := processEmail(ctx, awsClient, config, record.SES.Mail); err != nil {
+		if err := processMessage(ctx, awsClient, config, record.SES.Mail); err != nil {
 			return fmt.Errorf("error processing email: %w", err)
 		}
 	}
@@ -50,7 +50,7 @@ func handler(ctx context.Context, sesEvent events.SimpleEmailEvent) error {
 	return nil
 }
 
-func processEmail(ctx context.Context, awsClient *aws.AWSClient, config *Config, mail events.SimpleEmailMessage) error {
+func processMessage(ctx context.Context, awsClient *aws.AWSClient, config *Config, mail events.SimpleEmailMessage) error {
 	recipientTag, err := message.ExtractPlusAddress(mail.Destination[0])
 	if err != nil {
 		return fmt.Errorf("error extracting tag from recipient email address: %w", err)

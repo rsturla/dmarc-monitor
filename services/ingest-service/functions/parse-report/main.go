@@ -46,7 +46,7 @@ func handleRequest(ctx context.Context, sqsEvent events.SQSEvent) error {
 	}
 
 	for _, record := range sqsEvent.Records {
-		if err := processRecord(ctx, awsClient, cfg, record); err != nil {
+		if err := processMessage(ctx, awsClient, cfg, record); err != nil {
 			log.Printf("Error processing message: %v", err)
 			return fmt.Errorf("error processing message: %w", err)
 		}
@@ -60,8 +60,8 @@ func loadConfig() (*Config, error) {
 	return config.NewConfig[Config]()
 }
 
-// ProcessRecord processes an individual SQS record
-func processRecord(ctx context.Context, awsClient *aws.AWSClient, cfg *Config, record events.SQSMessage) error {
+// processMessage processes an individual SQS record
+func processMessage(ctx context.Context, awsClient *aws.AWSClient, cfg *Config, record events.SQSMessage) error {
 	var sqsMessage models.IngestSQSMessage
 	if err := json.Unmarshal([]byte(record.Body), &sqsMessage); err != nil {
 		return fmt.Errorf("error unmarshalling message: %w", err)
