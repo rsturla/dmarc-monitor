@@ -13,8 +13,8 @@ import * as logs from "aws-cdk-lib/aws-logs";
 export interface StatelessStackProps extends cdk.StackProps {
   readonly ingestStorageBucketName: string;
   readonly receiverDomain: string;
-  readonly rawEmailQueueArn: string;
-  readonly attachmentQueueArn: string;
+  readonly extractAttachmentQueueArn: string;
+  readonly parseReportQueueArn: string;
   readonly dmarcReportTableName: string;
   readonly dmarcRecordTableName: string;
 }
@@ -24,8 +24,10 @@ export class StatelessStack extends cdk.Stack {
     super(scope, id, props);
 
     const ingestStorageBucket = this.getS3Bucket(props.ingestStorageBucketName);
-    const rawEmailQueue = this.getSQSQueue(props.rawEmailQueueArn);
-    const attachmentQueue = this.getSQSQueue(props.attachmentQueueArn);
+    const extractAttachmentQueue = this.getSQSQueue(
+      props.extractAttachmentQueueArn
+    );
+    const parseReportQueue = this.getSQSQueue(props.parseReportQueueArn);
     const dmarcReportTable = this.getDynamoDBTable(props.dmarcReportTableName);
     const dmarcRecordTable = this.getDynamoDBTable(props.dmarcRecordTableName);
 
@@ -65,13 +67,13 @@ export class StatelessStack extends cdk.Stack {
       "../bin/enqueue-email",
       {
         INGEST_STORAGE_BUCKET_NAME: ingestStorageBucket.bucketName,
-        RAW_EMAIL_QUEUE_URL: rawEmailQueue.queueUrl,
+        NEXT_STAGE_QUEUE_URL: extractAttachmentQueue.queueUrl,
       }
     );
     const enqueueEmailFunctionPolicies: iam.PolicyStatement[] = [
       new iam.PolicyStatement({
         actions: ["sqs:SendMessage"],
-        resources: [rawEmailQueue.queueArn],
+        resources: [extractAttachmentQueue.queueArn],
       }),
       new iam.PolicyStatement({
         actions: ["s3:GetObject"],
@@ -108,15 +110,18 @@ export class StatelessStack extends cdk.Stack {
       "../bin/extract-attachment",
       {
         INGEST_STORAGE_BUCKET_NAME: ingestStorageBucket.bucketName,
-        INGEST_QUEUE_URL: attachmentQueue.queueUrl,
+        NEXT_STAGE_QUEUE_URL: parseReportQueue.queueUrl,
       }
     );
 
-    extractAttachmentFunction.addEventSourceMapping("RawEmailEventSource", {
-      eventSourceArn: rawEmailQueue.queueArn,
-      batchSize: 1,
-      // maxBatchingWindow: cdk.Duration.seconds(10),
-    });
+    extractAttachmentFunction.addEventSourceMapping(
+      "ExtractAttachmentEventSource",
+      {
+        eventSourceArn: extractAttachmentQueue.queueArn,
+        batchSize: 1,
+        // maxBatchingWindow: cdk.Duration.seconds(10),
+      }
+    );
     const extractAttachmentFunctionPolicies: iam.PolicyStatement[] = [
       new iam.PolicyStatement({
         actions: ["s3:GetObject"],
@@ -128,7 +133,7 @@ export class StatelessStack extends cdk.Stack {
       }),
       new iam.PolicyStatement({
         actions: ["sqs:SendMessage"],
-        resources: [attachmentQueue.queueArn],
+        resources: [parseReportQueue.queueArn],
       }),
       new iam.PolicyStatement({
         actions: [
@@ -136,7 +141,7 @@ export class StatelessStack extends cdk.Stack {
           "sqs:GetQueueAttributes",
           "sqs:ReceiveMessage",
         ],
-        resources: [rawEmailQueue.queueArn],
+        resources: [extractAttachmentQueue.queueArn],
       }),
     ];
     this.attachLambdaPolicies(
@@ -156,7 +161,7 @@ export class StatelessStack extends cdk.Stack {
     );
 
     parseReportFunction.addEventSourceMapping("ParseReportEventSource", {
-      eventSourceArn: attachmentQueue.queueArn,
+      eventSourceArn: parseReportQueue.queueArn,
       batchSize: 1,
       // maxBatchingWindow: cdk.Duration.seconds(10),
     });
@@ -171,7 +176,7 @@ export class StatelessStack extends cdk.Stack {
           "sqs:GetQueueAttributes",
           "sqs:ReceiveMessage",
         ],
-        resources: [attachmentQueue.queueArn],
+        resources: [parseReportQueue.queueArn],
       }),
       new iam.PolicyStatement({
         actions: ["dynamodb:PutItem", "dynamodb:BatchWriteItem"],

@@ -95,7 +95,7 @@ func processRecord(ctx context.Context, awsClient *aws.AWSClient, config *Config
 			return fmt.Errorf("error marshalling message: %w", err)
 		}
 
-		if err := awsClient.PublishSQSMessage(ctx, config.ReportQueueURL, string(messageJSON)); err != nil {
+		if err := awsClient.PublishSQSMessage(ctx, config.NextStageQueueURL, string(messageJSON)); err != nil {
 			return fmt.Errorf("error publishing message to SQS: %w", err)
 		}
 	}

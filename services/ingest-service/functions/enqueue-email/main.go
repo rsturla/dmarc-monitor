@@ -66,7 +66,7 @@ func processEmail(ctx context.Context, awsClient *aws.AWSClient, config *Config,
 		return fmt.Errorf("error marshalling message to JSON: %w", err)
 	}
 
-	if err := awsClient.PublishSQSMessage(ctx, config.RawEmailQueueURL, string(messageJSON)); err != nil {
+	if err := awsClient.PublishSQSMessage(ctx, config.NextStageQueueURL, string(messageJSON)); err != nil {
 		return fmt.Errorf("error publishing message to SQS: %w", err)
 	}
 
