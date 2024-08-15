@@ -1,6 +1,7 @@
 package aws
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -38,4 +39,16 @@ func (c *AWSClient) S3GetObject(ctx context.Context, bucket, key string) ([]byte
 	defer obj.Body.Close()
 
 	return io.ReadAll(obj.Body)
+}
+
+func (c *AWSClient) S3PutObject(ctx context.Context, bucket, key string, contentType string, body []byte) error {
+	_, err := c.S3.PutObject(ctx, &s3.PutObjectInput{
+		Bucket: &bucket,
+		Key:    &key,
+		Body:   bytes.NewReader(body),
+	})
+	if err != nil {
+		return fmt.Errorf("error putting object to S3: %w", err)
+	}
+	return nil
 }

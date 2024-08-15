@@ -2,6 +2,7 @@ package aws
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 
 	"github.com/aws/aws-sdk-go-v2/service/sqs"
@@ -18,5 +19,13 @@ func (c *AWSClient) SQSPublishMessage(ctx context.Context, queueURL, message str
 	}
 
 	fmt.Printf("Message sent with ID %s\n", *msg.MessageId)
+	return nil
+}
+
+// ParseSQSMessage parses an SQS message into a given struct.
+func ParseSQSMessage(body string, v interface{}) error {
+	if err := json.Unmarshal([]byte(body), v); err != nil {
+		return fmt.Errorf("error unmarshalling message: %w", err)
+	}
 	return nil
 }
