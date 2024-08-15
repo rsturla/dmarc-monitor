@@ -67,20 +67,3 @@ func processEmail(ctx context.Context, awsClient *aws.AWSClient, config *Config,
 
 	return nil
 }
-
-func extractPlusAddressTag(email string) (string, error) {
-	// Get the value between + and @ in the email address
-	// If the input is not a valid email address, return an error
-	// If the email address does not contain a +, return an empty string
-	emailParts := strings.Split(email, "@")
-	if len(emailParts) != 2 {
-		return "", fmt.Errorf("invalid email address: %s", email)
-	}
-
-	recipient := emailParts[0]
-	tagParts := strings.Split(recipient, "+")
-	if len(tagParts) != 2 {
-		return "", nil
-	}
-	return tagParts[1], nil
-}
