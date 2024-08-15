@@ -31,5 +31,5 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/dynamodb v1.34.5
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.59.0
 	github.com/aws/aws-sdk-go-v2/service/sqs v1.34.4
-	github.com/aws/aws-sdk-go-v2/service/ssm v1.52.4
+	github.com/aws/aws-sdk-go-v2/service/ssm v1.52.5
 )
