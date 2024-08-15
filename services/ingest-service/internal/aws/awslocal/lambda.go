@@ -7,13 +7,14 @@ import (
 	"os"
 )
 
-// Function to read and parse event.json file and call the handler
+// Function to read and parse an event JSON file, returning the event and context
+// for the local Lambda function.
 func CreateLocalEvent[T any](eventFile string) (T, context.Context, error) {
 	var event T
 
 	file, err := os.ReadFile(eventFile)
 	if err != nil {
-		return event, nil, fmt.Errorf("could not read event.json file: %w", err)
+		return event, nil, fmt.Errorf("could not read event JSON file: %w", err)
 	}
 
 	if err := json.Unmarshal(file, &event); err != nil {

@@ -8,9 +8,10 @@ import { AttributeType } from "aws-cdk-lib/aws-dynamodb";
 
 export class StatefulStack extends Stack {
   public readonly ingestStorageBucket: Bucket;
-  public readonly rawEmailQueue: SQSQueue;
-  public readonly attachmentQueue: SQSQueue;
-  public readonly dmarcReportQueue: SQSQueue;
+
+  public readonly extractAttachmentQueue: SQSQueue;
+  public readonly parseReportQueue: SQSQueue;
+
   public readonly dmarcReportTable: DynamoDBTable;
   public readonly dmarcRecordTable: DynamoDBTable;
 
@@ -52,23 +53,20 @@ export class StatefulStack extends Stack {
       ],
     });
 
-    // rawEmailQueue: Messages added when SES receives an email.
+    // ExtractAttachmentQueue: Messages added when SES receives an email.
     // Messages point to the S3 object containing the email
-    const rawEmailQueue = new SQSQueue(this, "RawEmailQueue", {
-      encryption: QueueEncryption.SQS_MANAGED,
-      enableDeadLetterQueue: true,
-    });
+    const extractAttachmentQueue = new SQSQueue(
+      this,
+      "ExtractAttachmentQueue",
+      {
+        encryption: QueueEncryption.SQS_MANAGED,
+        enableDeadLetterQueue: true,
+      }
+    );
 
-    // attachmentQueue: Messages added when a Lambda function has extracted an attachment from an email
+    // parseReportQueue: Messages added when a Lambda function has extracted an attachment from an email
     // Messages point to the S3 object containing the extracted XML attachment
-    const attachmentQueue = new SQSQueue(this, "AttachmentQueue", {
-      encryption: QueueEncryption.SQS_MANAGED,
-      enableDeadLetterQueue: true,
-    });
-
-    // dmarcReportQueue: Messages added when a Lambda function has parsed a DMARC report attachment and stored the data in DynamoDB
-    // Messages point to the DynamoDB primary key of the stored DMARC report
-    const dmarcReportQueue = new SQSQueue(this, "DmarcReportQueue", {
+    const parseReportQueue = new SQSQueue(this, "ParseReportQueue", {
       encryption: QueueEncryption.SQS_MANAGED,
       enableDeadLetterQueue: true,
     });
@@ -87,9 +85,8 @@ export class StatefulStack extends Stack {
     });
 
     this.ingestStorageBucket = ingestStorageBucket;
-    this.rawEmailQueue = rawEmailQueue;
-    this.attachmentQueue = attachmentQueue;
-    this.dmarcReportQueue = dmarcReportQueue;
+    this.extractAttachmentQueue = extractAttachmentQueue;
+    this.parseReportQueue = parseReportQueue;
     this.dmarcReportTable = dmarcReportTable;
     this.dmarcRecordTable = dmarcRecordTable;
   }
