@@ -1,15 +1,10 @@
 package models
 
-type IngestSQSMessage struct {
-	TenantID     string `json:"tenantID"`
-	S3ObjectPath string `json:"s3ObjectPath"`
-	Timestamp    string `json:"timestamp"`
-	MessageID    string `json:"messageID"`
-}
-
-type DmarcReportEntry struct {
+// DmarcReportMetadataItem represents a DMARC report item in the DynamoDB table.  This item
+// contains the metadata for a DMARC report.
+type DmarcReportMetadataItem struct {
 	ID               string `dynamodbav:"id"`
-	ReportID         string `dynamodbav:"reportID"`
+	ReportId         string `dynamodbav:"reportId"`
 	OrgName          string `dynamodbav:"orgName"`
 	Email            string `dynamodbav:"email"`
 	ExtraContactInfo string `dynamodbav:"extraContactInfo"`
@@ -24,9 +19,11 @@ type DmarcReportEntry struct {
 	Np               string `dynamodbav:"np"`
 }
 
-type DmarcRecordEntry struct {
+// DmarcRecordItem represents a DMARC record item in the DynamoDB table.  This item
+// contains the details of a DMARC record.  Each record is associated with a single DMARC report.
+type DmarcRecordItem struct {
 	ID                         string                           `dynamodbav:"id"`
-	ReportID                   string                           `dynamodbav:"reportID"`
+	ReportId                   string                           `dynamodbav:"reportId"`
 	SourceIp                   string                           `dynamodbav:"sourceIp"`
 	Count                      int                              `dynamodbav:"count"`
 	PolicyEvaluatedDisposition string                           `dynamodbav:"policyEvaluatedDisposition"`
@@ -37,6 +34,8 @@ type DmarcRecordEntry struct {
 	AuthResultsSpf             DmarcAuthResultNestedAttribute   `dynamodbav:"authResultsSpf"`
 }
 
+// DmarcAuthResultNestedAttribute represents a nested attribute for the DMARC record item in the DynamoDB table.
+// This attribute contains the details of the authentication results for a specific domain.
 type DmarcAuthResultNestedAttribute struct {
 	Domain   string `dynamodbav:"domain"`
 	Result   string `dynamodbav:"result"`

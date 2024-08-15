@@ -13,12 +13,12 @@ import (
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
-	"github.com/rsturla/dmarc-monitor/services/ingest-service/pkg/aws"
-	"github.com/rsturla/dmarc-monitor/services/ingest-service/pkg/aws/awslocal"
-	"github.com/rsturla/dmarc-monitor/services/ingest-service/pkg/compress"
-	"github.com/rsturla/dmarc-monitor/services/ingest-service/pkg/config"
-	"github.com/rsturla/dmarc-monitor/services/ingest-service/pkg/message"
-	"github.com/rsturla/dmarc-monitor/services/ingest-service/pkg/models"
+	"github.com/rsturla/dmarc-monitor/services/ingest-service/internal/aws"
+	"github.com/rsturla/dmarc-monitor/services/ingest-service/internal/aws/awslocal"
+	"github.com/rsturla/dmarc-monitor/services/ingest-service/internal/compress"
+	"github.com/rsturla/dmarc-monitor/services/ingest-service/internal/config"
+	"github.com/rsturla/dmarc-monitor/services/ingest-service/internal/email/message"
+	"github.com/rsturla/dmarc-monitor/services/ingest-service/internal/models"
 )
 
 func main() {
@@ -56,14 +56,14 @@ func handler(ctx context.Context, sqsEvent events.SQSEvent) error {
 }
 
 func processRecord(ctx context.Context, awsClient *aws.AWSClient, config *Config, record events.SQSMessage) error {
-	var sqsMessage models.IngestSQSMessage
+	var sqsMessage models.IngestMessage
 	if err := json.Unmarshal([]byte(record.Body), &sqsMessage); err != nil {
 		return fmt.Errorf("error unmarshalling message: %w", err)
 	}
 
 	log.Printf("Processing message: %s\n", sqsMessage.MessageID)
 
-	body, err := awsClient.GetS3Object(ctx, config.ReportStorageBucketName, sqsMessage.S3ObjectPath)
+	body, err := awsClient.S3GetObject(ctx, config.ReportStorageBucketName, sqsMessage.RawS3ObjectPath)
 	if err != nil {
 		return err
 	}
@@ -80,22 +80,23 @@ func processRecord(ctx context.Context, awsClient *aws.AWSClient, config *Config
 		}
 
 		// Save the report to the S3 bucket - under the reports/<message> key
-		s3ObjectPath, err := saveReport(ctx, awsClient, config, sqsMessage.MessageID, sqsMessage.TenantID, data)
+		attachmentS3ObjectPath, err := saveReport(ctx, awsClient, config, sqsMessage.MessageID, sqsMessage.TenantID, data)
 		if err != nil {
 			return fmt.Errorf("error saving report: %w", err)
 		}
 
-		messageJSON, err := json.Marshal(models.IngestSQSMessage{
-			TenantID:     sqsMessage.TenantID,
-			S3ObjectPath: s3ObjectPath,
-			Timestamp:    sqsMessage.Timestamp,
-			MessageID:    sqsMessage.MessageID,
+		messageJSON, err := json.Marshal(models.IngestMessage{
+			TenantID:               sqsMessage.TenantID,
+			RawS3ObjectPath:        sqsMessage.RawS3ObjectPath,
+			AttachmentS3ObjectPath: attachmentS3ObjectPath,
+			MessageTimestamp:       sqsMessage.MessageTimestamp,
+			MessageID:              sqsMessage.MessageID,
 		})
 		if err != nil {
 			return fmt.Errorf("error marshalling message: %w", err)
 		}
 
-		if err := awsClient.PublishSQSMessage(ctx, config.NextStageQueueURL, string(messageJSON)); err != nil {
+		if err := awsClient.SQSPublishMessage(ctx, config.NextStageQueueURL, string(messageJSON)); err != nil {
 			return fmt.Errorf("error publishing message to SQS: %w", err)
 		}
 	}

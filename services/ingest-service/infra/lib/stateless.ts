@@ -118,8 +118,8 @@ export class StatelessStack extends cdk.Stack {
       "ExtractAttachmentEventSource",
       {
         eventSourceArn: extractAttachmentQueue.queueArn,
-        batchSize: 1,
-        // maxBatchingWindow: cdk.Duration.seconds(10),
+        batchSize: 10,
+        maxBatchingWindow: cdk.Duration.seconds(10),
       }
     );
     const extractAttachmentFunctionPolicies: iam.PolicyStatement[] = [
@@ -162,8 +162,8 @@ export class StatelessStack extends cdk.Stack {
 
     parseReportFunction.addEventSourceMapping("ParseReportEventSource", {
       eventSourceArn: parseReportQueue.queueArn,
-      batchSize: 1,
-      // maxBatchingWindow: cdk.Duration.seconds(10),
+      batchSize: 10,
+      maxBatchingWindow: cdk.Duration.seconds(10),
     });
     const parseReportFunctionPolicies: iam.PolicyStatement[] = [
       new iam.PolicyStatement({

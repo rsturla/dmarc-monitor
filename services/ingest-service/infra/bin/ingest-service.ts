@@ -1,6 +1,6 @@
 import * as cdk from "aws-cdk-lib";
 import { StatefulStack } from "../lib/stateful-stack";
-import { StatelessStack } from "../lib/stateless/stack";
+import { StatelessStack } from "../lib/stateless";
 
 const app = new cdk.App();
 const appName = "dmarc-monitor-ingest-service";

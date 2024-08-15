@@ -11,11 +11,11 @@ import (
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 	dynamodbTypes "github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
-	"github.com/rsturla/dmarc-monitor/services/ingest-service/pkg/aws"
-	"github.com/rsturla/dmarc-monitor/services/ingest-service/pkg/aws/awslocal"
-	"github.com/rsturla/dmarc-monitor/services/ingest-service/pkg/config"
-	"github.com/rsturla/dmarc-monitor/services/ingest-service/pkg/dmarc/rua"
-	"github.com/rsturla/dmarc-monitor/services/ingest-service/pkg/models"
+	"github.com/rsturla/dmarc-monitor/services/ingest-service/internal/aws"
+	"github.com/rsturla/dmarc-monitor/services/ingest-service/internal/aws/awslocal"
+	"github.com/rsturla/dmarc-monitor/services/ingest-service/internal/config"
+	"github.com/rsturla/dmarc-monitor/services/ingest-service/internal/dmarc/rua"
+	"github.com/rsturla/dmarc-monitor/services/ingest-service/internal/models"
 )
 
 // Main function
@@ -62,14 +62,14 @@ func loadConfig() (*Config, error) {
 
 // ProcessRecord processes an individual SQS record
 func processRecord(ctx context.Context, awsClient *aws.AWSClient, cfg *Config, record events.SQSMessage) error {
-	var sqsMessage models.IngestSQSMessage
+	var sqsMessage models.IngestMessage
 	if err := json.Unmarshal([]byte(record.Body), &sqsMessage); err != nil {
 		return fmt.Errorf("error unmarshalling message: %w", err)
 	}
 
 	log.Printf("Processing message: %s", sqsMessage.MessageID)
 
-	body, err := awsClient.GetS3Object(ctx, cfg.ReportStorageBucketName, sqsMessage.S3ObjectPath)
+	body, err := awsClient.S3GetObject(ctx, cfg.ReportStorageBucketName, sqsMessage.AttachmentS3ObjectPath)
 	if err != nil {
 		return err
 	}
@@ -93,27 +93,27 @@ func parseRUAReport(body []byte) (*rua.RUA, error) {
 }
 
 // StoreReports stores the DMARC reports and records in DynamoDB
-func storeReports(ctx context.Context, awsClient *aws.AWSClient, cfg *Config, sqsMessage models.IngestSQSMessage, ruaReport *rua.RUA) error {
-	dmarcReportEntry := createDmarcReportEntry(sqsMessage, ruaReport)
-	dmarcRecordEntries := createDmarcRecordEntries(dmarcReportEntry, ruaReport)
+func storeReports(ctx context.Context, awsClient *aws.AWSClient, cfg *Config, sqsMessage models.IngestMessage, ruaReport *rua.RUA) error {
+	dmarcReportItem := createDmarcReportItem(sqsMessage, ruaReport)
+	dmarcRecordItems := createDmarcRecordItems(dmarcReportItem, ruaReport)
 
-	reportStorageObject, err := attributevalue.MarshalMap(dmarcReportEntry)
+	reportStorageObject, err := attributevalue.MarshalMap(dmarcReportItem)
 	if err != nil {
-		return fmt.Errorf("error marshalling DmarcReportEntry: %w", err)
+		return fmt.Errorf("error marshalling DmarcReportItem: %w", err)
 	}
 
-	if err := awsClient.PutDynamoDbItem(ctx, cfg.ReportTableName, &reportStorageObject); err != nil {
-		return fmt.Errorf("error putting DmarcReportEntry: %w", err)
+	if err := awsClient.DynamoDBPutItem(ctx, cfg.ReportTableName, &reportStorageObject); err != nil {
+		return fmt.Errorf("error putting DmarcReportItem: %w", err)
 	}
 
-	return storeDmarcRecordEntries(ctx, awsClient, cfg.RecordTableName, dmarcRecordEntries)
+	return storeDmarcRecordItems(ctx, awsClient, cfg.RecordTableName, dmarcRecordItems)
 }
 
-// CreateDmarcReportEntry creates a DMARC report entry
-func createDmarcReportEntry(sqsMessage models.IngestSQSMessage, ruaReport *rua.RUA) models.DmarcReportEntry {
-	return models.DmarcReportEntry{
+// CreateDmarcReportItem creates a DMARC report item
+func createDmarcReportItem(sqsMessage models.IngestMessage, ruaReport *rua.RUA) models.DmarcReportMetadataItem {
+	return models.DmarcReportMetadataItem{
 		ID:               fmt.Sprintf("%s#%s", sqsMessage.TenantID, ruaReport.ReportMetadata.ReportID),
-		ReportID:         ruaReport.ReportMetadata.ReportID,
+		ReportId:         ruaReport.ReportMetadata.ReportID,
 		OrgName:          ruaReport.ReportMetadata.OrgName,
 		Email:            ruaReport.ReportMetadata.Email,
 		ExtraContactInfo: ruaReport.ReportMetadata.ExtraContactInfo,
@@ -129,9 +129,9 @@ func createDmarcReportEntry(sqsMessage models.IngestSQSMessage, ruaReport *rua.R
 	}
 }
 
-// CreateDmarcRecordEntries creates DMARC record entries
-func createDmarcRecordEntries(dmarcReportEntry models.DmarcReportEntry, ruaReport *rua.RUA) []models.DmarcRecordEntry {
-	var dmarcRecordEntries []models.DmarcRecordEntry
+// CreateDmarcRecordItems creates DMARC record items
+func createDmarcRecordItems(dmarcReportItem models.DmarcReportMetadataItem, ruaReport *rua.RUA) []models.DmarcRecordItem {
+	var dmarcRecordItems []models.DmarcRecordItem
 	for i, record := range ruaReport.Records {
 		var authResultsDkim []models.DmarcAuthResultNestedAttribute
 		for _, dkim := range record.AuthResults.Dkim {
@@ -142,9 +142,9 @@ func createDmarcRecordEntries(dmarcReportEntry models.DmarcReportEntry, ruaRepor
 			})
 		}
 
-		dmarcRecordEntries = append(dmarcRecordEntries, models.DmarcRecordEntry{
-			ID:                         fmt.Sprintf("%s#%d", dmarcReportEntry.ID, i),
-			ReportID:                   dmarcReportEntry.ReportID,
+		dmarcRecordItems = append(dmarcRecordItems, models.DmarcRecordItem{
+			ID:                         fmt.Sprintf("%s#%d", dmarcReportItem.ID, i),
+			ReportId:                   dmarcReportItem.ReportId,
 			SourceIp:                   record.Row.SourceIp.String(),
 			Count:                      record.Row.Count,
 			PolicyEvaluatedDisposition: record.Row.PolicyEvaluated.Disposition,
@@ -158,24 +158,24 @@ func createDmarcRecordEntries(dmarcReportEntry models.DmarcReportEntry, ruaRepor
 			},
 		})
 	}
-	return dmarcRecordEntries
+	return dmarcRecordItems
 }
 
-// StoreDmarcRecordEntries stores the DMARC record entries in DynamoDB
-func storeDmarcRecordEntries(ctx context.Context, awsClient *aws.AWSClient, tableName string, entries []models.DmarcRecordEntry) error {
-	reportStorageObjects := make([]map[string]dynamodbTypes.AttributeValue, len(entries))
-	for i, record := range entries {
+// StoreDmarcRecordItems stores the DMARC record items in DynamoDB
+func storeDmarcRecordItems(ctx context.Context, awsClient *aws.AWSClient, tableName string, items []models.DmarcRecordItem) error {
+	reportStorageObjects := make([]map[string]dynamodbTypes.AttributeValue, len(items))
+	for i, record := range items {
 		recordStorageObject, err := attributevalue.MarshalMap(record)
 		if err != nil {
-			return fmt.Errorf("error marshalling DmarcRecordEntry: %w", err)
+			return fmt.Errorf("error marshalling DmarcRecordItem: %w", err)
 		}
 		reportStorageObjects[i] = recordStorageObject
 	}
 
-	if err := awsClient.PutDynamoDbBatchItems(ctx, tableName, reportStorageObjects); err != nil {
-		return fmt.Errorf("error putting DmarcRecordEntries: %w", err)
+	if err := awsClient.DynamoDBPutBatchItems(ctx, tableName, reportStorageObjects); err != nil {
+		return fmt.Errorf("error putting DmarcRecordItems: %w", err)
 	}
 
-	log.Printf("Successfully stored DMARC records: %+v", entries)
+	log.Printf("Successfully stored DMARC records: %+v", items)
 	return nil
 }

@@ -6,14 +6,14 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
-	"github.com/rsturla/dmarc-monitor/services/ingest-service/pkg/aws"
-	"github.com/rsturla/dmarc-monitor/services/ingest-service/pkg/aws/awslocal"
-	"github.com/rsturla/dmarc-monitor/services/ingest-service/pkg/config"
-	"github.com/rsturla/dmarc-monitor/services/ingest-service/pkg/message"
-	"github.com/rsturla/dmarc-monitor/services/ingest-service/pkg/models"
+	"github.com/rsturla/dmarc-monitor/services/ingest-service/internal/aws"
+	"github.com/rsturla/dmarc-monitor/services/ingest-service/internal/aws/awslocal"
+	"github.com/rsturla/dmarc-monitor/services/ingest-service/internal/config"
+	"github.com/rsturla/dmarc-monitor/services/ingest-service/internal/models"
 )
 
 func main() {
@@ -51,24 +51,36 @@ func handler(ctx context.Context, sesEvent events.SimpleEmailEvent) error {
 }
 
 func processEmail(ctx context.Context, awsClient *aws.AWSClient, config *Config, mail events.SimpleEmailMessage) error {
-	recipientTag, err := message.ExtractPlusAddress(mail.Destination[0])
-	if err != nil {
-		return fmt.Errorf("error extracting tag from recipient email address: %w", err)
-	}
-
-	messageJSON, err := json.Marshal(models.IngestSQSMessage{
-		TenantID:     recipientTag,
-		S3ObjectPath: fmt.Sprintf("%s%s", "raw/", mail.MessageID),
-		Timestamp:    fmt.Sprintf("%d", mail.Timestamp.Unix()),
-		MessageID:    mail.MessageID,
+	messageJSON, err := json.Marshal(models.IngestMessage{
+		TenantID:         strings.Split(mail.Destination[0], "@")[0],
+		RawS3ObjectPath:  fmt.Sprintf("%s%s", "raw/", mail.MessageID),
+		MessageTimestamp: fmt.Sprintf("%d", mail.Timestamp.Unix()),
+		MessageID:        mail.MessageID,
 	})
 	if err != nil {
 		return fmt.Errorf("error marshalling message to JSON: %w", err)
 	}
 
-	if err := awsClient.PublishSQSMessage(ctx, config.NextStageQueueURL, string(messageJSON)); err != nil {
+	if err := awsClient.SQSPublishMessage(ctx, config.NextStageQueueURL, string(messageJSON)); err != nil {
 		return fmt.Errorf("error publishing message to SQS: %w", err)
 	}
 
 	return nil
+}
+
+func extractPlusAddressTag(email string) (string, error) {
+	// Get the value between + and @ in the email address
+	// If the input is not a valid email address, return an error
+	// If the email address does not contain a +, return an empty string
+	emailParts := strings.Split(email, "@")
+	if len(emailParts) != 2 {
+		return "", fmt.Errorf("invalid email address: %s", email)
+	}
+
+	recipient := emailParts[0]
+	tagParts := strings.Split(recipient, "+")
+	if len(tagParts) != 2 {
+		return "", nil
+	}
+	return tagParts[1], nil
 }
