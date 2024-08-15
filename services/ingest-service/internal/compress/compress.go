@@ -8,6 +8,7 @@ import (
 	"io"
 )
 
+// Decompress decompresses the given data based on the MIME type, returning the uncompressed byte slice.
 func Decompress(data []byte, mimeType string) ([]byte, error) {
 	switch mimeType {
 	case "application/gzip":

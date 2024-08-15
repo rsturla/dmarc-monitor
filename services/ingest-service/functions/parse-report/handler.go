@@ -60,7 +60,7 @@ func processRecord(ctx context.Context, awsClient *aws.AWSClient, cfg *Config, r
 
 // StoreReports stores the DMARC reports and records in DynamoDB
 func storeReports(ctx context.Context, awsClient *aws.AWSClient, cfg *Config, sqsMessage models.IngestMessage, ruaReport *rua.RUA) error {
-	dmarcReportItem := dmarc.CreateDmarcReportItem(sqsMessage, ruaReport)
+	dmarcReportItem := dmarc.CreateDmarcReportItem(sqsMessage.TenantID, ruaReport)
 	dmarcRecordItems := dmarc.CreateDmarcRecordItems(dmarcReportItem, ruaReport)
 
 	if err := storeDmarcReportItem(ctx, awsClient, cfg.ReportTableName, dmarcReportItem); err != nil {

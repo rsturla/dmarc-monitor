@@ -41,6 +41,7 @@ func (c *AWSClient) S3GetObject(ctx context.Context, bucket, key string) ([]byte
 	return io.ReadAll(obj.Body)
 }
 
+// S3PutObject puts a single object into an S3 bucket.
 func (c *AWSClient) S3PutObject(ctx context.Context, bucket, key string, contentType string, body []byte) error {
 	_, err := c.S3.PutObject(ctx, &s3.PutObjectInput{
 		Bucket: &bucket,

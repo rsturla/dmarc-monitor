@@ -35,6 +35,7 @@ func handler(ctx context.Context, sqsEvent events.SQSEvent) error {
 	return nil
 }
 
+// processRecord processes an individual SQS record and extracts the attachment into the S3 bucket
 func processRecord(ctx context.Context, awsClient *aws.AWSClient, config *Config, record events.SQSMessage) error {
 	var sqsMessage models.IngestMessage
 	if err := aws.ParseSQSMessage(record.Body, &sqsMessage); err != nil {
@@ -53,7 +54,7 @@ func processRecord(ctx context.Context, awsClient *aws.AWSClient, config *Config
 
 	for _, attachment := range email.Attachments {
 		// Save the report to the S3 bucket - under the reports/<message> key
-		if err := processEmailAttachment(ctx, attachment, awsClient, config, sqsMessage); err != nil {
+		if err := processEmailAttachment(ctx, &attachment, awsClient, config, &sqsMessage); err != nil {
 			return err
 		}
 	}
@@ -61,6 +62,7 @@ func processRecord(ctx context.Context, awsClient *aws.AWSClient, config *Config
 	return nil
 }
 
+// getRawEmail retrieves the raw email from S3
 func getRawEmail(ctx context.Context, awsClient *aws.AWSClient, config *Config, messageID string) ([]byte, error) {
 	body, err := awsClient.S3GetObject(ctx, config.ReportStorageBucketName, messageID)
 	if err != nil {

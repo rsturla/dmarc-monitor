@@ -14,8 +14,10 @@ import (
 	"github.com/rsturla/dmarc-monitor/services/ingest-service/internal/models"
 )
 
-func processEmailAttachment(ctx context.Context, attachment message.Attachment, awsClient *aws.AWSClient, config *Config, sqsMessage models.IngestMessage) error {
-	data, err := getAttachmentData(&attachment)
+// processEmailAttachment processes an individual SES email attachment by decompressing
+// it, saving it to the S3 bucket, and publishing a message to the next stage SQS queue.
+func processEmailAttachment(ctx context.Context, attachment *message.Attachment, awsClient *aws.AWSClient, config *Config, sqsMessage *models.IngestMessage) error {
+	data, err := getAttachmentData(attachment)
 	if err != nil {
 		return errors.NewLambdaError(500, fmt.Sprintf("error getting attachment data: %v", err))
 	}
@@ -42,6 +44,7 @@ func processEmailAttachment(ctx context.Context, attachment message.Attachment, 
 	return nil
 }
 
+// getAttachmentData reads the attachment data, decompresses it, and returns the uncompressed data.
 func getAttachmentData(attachment *message.Attachment) ([]byte, error) {
 	data, err := io.ReadAll(attachment.Data)
 	if err != nil {
@@ -56,6 +59,7 @@ func getAttachmentData(attachment *message.Attachment) ([]byte, error) {
 	return uncompressed, nil
 }
 
+// saveReport saves the report data to the S3 bucket and returns the S3 key.
 func saveReport(ctx context.Context, awsClient *aws.AWSClient, config *Config, messageID string, tenantID string, data []byte) (string, error) {
 	s3Key := fmt.Sprintf("reports/%s/%s/%s.xml", tenantID, time.Now().Format("2006/01/02"), messageID)
 	contentType := "application/xml"

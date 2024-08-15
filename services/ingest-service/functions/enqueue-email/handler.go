@@ -36,6 +36,7 @@ func handler(ctx context.Context, sesEvent events.SimpleEmailEvent) error {
 	return nil
 }
 
+// processEmail processes an individual SES email message and adds it to the SQS queue for further processing downstream.
 func processEmail(ctx context.Context, awsClient *aws.AWSClient, config *Config, mail events.SimpleEmailMessage) error {
 	tenantID := strings.Split(mail.Destination[0], "@")[0]
 	messageJSON, err := json.Marshal(models.IngestMessage{

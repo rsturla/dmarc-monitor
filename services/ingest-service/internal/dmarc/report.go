@@ -7,6 +7,7 @@ import (
 	"github.com/rsturla/dmarc-monitor/services/ingest-service/internal/models"
 )
 
+// ParseRUAReport parses the RUA report from the raw XML bytes into a RUA struct
 func ParseRUAReport(body []byte) (*rua.RUA, error) {
 	var ruaReport rua.RUA
 	if err := ruaReport.ParseXML(body); err != nil {
@@ -15,9 +16,10 @@ func ParseRUAReport(body []byte) (*rua.RUA, error) {
 	return &ruaReport, nil
 }
 
-func CreateDmarcReportItem(sqsMessage models.IngestMessage, ruaReport *rua.RUA) models.DmarcReportMetadataItem {
+// CreateDmarcReportItem creates a DMARC report item from the SQS message and RUA report
+func CreateDmarcReportItem(tenantId string, ruaReport *rua.RUA) models.DmarcReportMetadataItem {
 	return models.DmarcReportMetadataItem{
-		ID:               fmt.Sprintf("%s#%s", sqsMessage.TenantID, ruaReport.ReportMetadata.ReportID),
+		ID:               fmt.Sprintf("%s#%s", tenantId, ruaReport.ReportMetadata.ReportID),
 		ReportId:         ruaReport.ReportMetadata.ReportID,
 		OrgName:          ruaReport.ReportMetadata.OrgName,
 		Email:            ruaReport.ReportMetadata.Email,
@@ -34,6 +36,7 @@ func CreateDmarcReportItem(sqsMessage models.IngestMessage, ruaReport *rua.RUA) 
 	}
 }
 
+// CreateDmarcRecordItems creates DMARC record items from the RUA report
 func CreateDmarcRecordItems(dmarcReportItem models.DmarcReportMetadataItem, ruaReport *rua.RUA) []models.DmarcRecordItem {
 	var dmarcRecordItems []models.DmarcRecordItem
 	for i, record := range ruaReport.Records {

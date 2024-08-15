@@ -8,6 +8,7 @@ import (
 	dynamodbTypes "github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 )
 
+// Puts a single item into a DynamoDB table.
 func (c *AWSClient) DynamoDBPutItem(ctx context.Context, tableName string, item *map[string]dynamodbTypes.AttributeValue) error {
 	_, err := c.DynamoDb.PutItem(ctx, &dynamodb.PutItemInput{
 		TableName: &tableName,
@@ -20,6 +21,7 @@ func (c *AWSClient) DynamoDBPutItem(ctx context.Context, tableName string, item 
 	return nil
 }
 
+// Puts multiple items into a DynamoDB table in batches of 25 items.  The function owns the batch logic.
 func (c *AWSClient) DynamoDBPutBatchItems(ctx context.Context, tableName string, items []map[string]dynamodbTypes.AttributeValue) error {
 	const batchSize = 25
 
