@@ -169,9 +169,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"aws-cdk-lib@npm:2.151.0":
-  version: 2.151.0
-  resolution: "aws-cdk-lib@npm:2.151.0"
+"aws-cdk-lib@npm:2.152.0":
+  version: 2.152.0
+  resolution: "aws-cdk-lib@npm:2.152.0"
   dependencies:
     "@aws-cdk/asset-awscli-v1": "npm:^2.2.202"
     "@aws-cdk/asset-kubectl-v20": "npm:^2.1.2"
@@ -189,13 +189,13 @@ __metadata:
     yaml: "npm:1.10.2"
   peerDependencies:
     constructs: ^10.0.0
-  checksum: 10c0/5e5325e6f8fd02368518edc988c8c7c2ca20d81b166158b0d8e86bab16bf4c7508ca826646202870cf932e221ad403fd2e2dc172cc3bbcb8762d28ad56937ed1
+  checksum: 10c0/96f5fe99062bbbfeaab06698fe7dd7b1a78fac84725bcbcd4756c2c9754604c7618ab5cda4cb39881ffe8402626e2c35aefb6912202eb94b8b6a979d1aa1edaa
   languageName: node
   linkType: hard
 
-"aws-cdk@npm:2.151.0":
-  version: 2.151.0
-  resolution: "aws-cdk@npm:2.151.0"
+"aws-cdk@npm:2.152.0":
+  version: 2.152.0
+  resolution: "aws-cdk@npm:2.152.0"
   dependencies:
     fsevents: "npm:2.3.2"
   dependenciesMeta:
@@ -203,7 +203,7 @@ __metadata:
       optional: true
   bin:
     cdk: bin/cdk
-  checksum: 10c0/af86dc7f8d39b5b8bdc277f5ae3d7d34a1b23153f6dd3b03e8f717f393081eb8ea34e0f73f45cbf3cdbb88d3717d0de31238757117e854f9b2528787b9d7151f
+  checksum: 10c0/7c62ac24d5a9ce83a7586e929bf2de18759fc74bbbd47cee64ad5ed8ace0228f0ad10765eca015e38806750f89980d0dd63594d9e69f48c7e02c31b31209e2de
   languageName: node
   linkType: hard
 
@@ -265,7 +265,7 @@ __metadata:
   resolution: "cdk-constructs@workspace:libs/cdk-constructs"
   dependencies:
     "@types/node": "npm:22.1.0"
-    aws-cdk-lib: "npm:2.151.0"
+    aws-cdk-lib: "npm:2.152.0"
     constructs: "npm:10.3.0"
     typescript: "npm:5.5.4"
   languageName: unknown
@@ -552,8 +552,8 @@ __metadata:
   resolution: "ingest-service-infra@workspace:services/ingest-service/infra"
   dependencies:
     "@types/node": "npm:20.14.14"
-    aws-cdk: "npm:2.151.0"
-    aws-cdk-lib: "npm:2.151.0"
+    aws-cdk: "npm:2.152.0"
+    aws-cdk-lib: "npm:2.152.0"
     cdk-constructs: "workspace:^"
     constructs: "npm:10.3.0"
   languageName: unknown
