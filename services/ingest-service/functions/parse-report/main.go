@@ -6,7 +6,7 @@ import (
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
-	"github.com/rsturla/dmarc-monitor/services/ingest-service/internal/aws/awslocal"
+	"github.com/rsturla/dmarc-monitor/libs/common/aws/awslocal"
 )
 
 // Main function
