@@ -1,0 +1,7 @@
+setup:
+  #!/usr/bin/env bash
+  poetry install
+
+generate:
+  #!/usr/bin/env bash
+  poetry run python overview.py -o ./out/overview.png
