@@ -5,7 +5,7 @@
     "@types/node": "22.4.1",
     "aws-cdk-lib": "2.152.0",
     "constructs": "10.3.0",
-    "typescript": "5.5.4"
+    "typescript": "5.7.2"
   },
   "exports": {
     ".": "./lib/index.ts",
