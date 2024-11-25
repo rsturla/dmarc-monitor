@@ -1,6 +1,6 @@
 {
   "name": "cdk-constructs",
-  "packageManager": "yarn@4.4.0",
+  "packageManager": "yarn@4.5.3",
   "devDependencies": {
     "@types/node": "22.4.1",
     "aws-cdk-lib": "2.152.0",
