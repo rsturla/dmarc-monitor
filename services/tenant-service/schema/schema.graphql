@@ -1,0 +1,29 @@
+# Define the Tenant type with relevant fields
+type Tenant {
+  id: ID!
+  name: String!
+  contactEmail: String!
+  createdAt: String!
+  updatedAt: String!
+}
+
+# Define queries for getting a single tenant and listing tenants
+type Query {
+  # Get a single tenant by ID
+  getTenant(id: ID!): Tenant
+
+  # List all tenants with optional pagination
+  listTenants(limit: Int, offset: Int): [Tenant!]!
+}
+
+# Define mutations for adding, updating, and deleting tenants
+type Mutation {
+  # Add a new tenant
+  addTenant(name: String!, email: String!): Tenant!
+
+  # Update an existing tenant by ID
+  updateTenant(id: ID!, name: String, email: String): Tenant!
+
+  # Delete a tenant by ID
+  deleteTenant(id: ID!): Boolean!
+}
