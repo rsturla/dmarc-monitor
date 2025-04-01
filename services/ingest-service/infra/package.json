@@ -7,7 +7,7 @@
   "devDependencies": {
     "@types/node": "20.16.1",
     "aws-cdk": "2.152.0",
-    "aws-cdk-lib": "2.152.0",
+    "aws-cdk-lib": "2.187.0",
     "cdk-constructs": "workspace:^",
     "constructs": "10.3.0"
   }
