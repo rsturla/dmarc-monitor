@@ -547,6 +547,18 @@ __metadata:
   languageName: node
   linkType: hard
 
+"infra@workspace:services/tenant-service/infra":
+  version: 0.0.0-use.local
+  resolution: "infra@workspace:services/tenant-service/infra"
+  dependencies:
+    "@types/node": "npm:20.16.1"
+    aws-cdk: "npm:2.152.0"
+    aws-cdk-lib: "npm:2.152.0"
+    cdk-constructs: "workspace:^"
+    constructs: "npm:10.3.0"
+  languageName: unknown
+  linkType: soft
+
 "ingest-service-infra@workspace:services/ingest-service/infra":
   version: 0.0.0-use.local
   resolution: "ingest-service-infra@workspace:services/ingest-service/infra"
