@@ -76,12 +76,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/node@npm:20.16.1":
-  version: 20.16.1
-  resolution: "@types/node@npm:20.16.1"
+"@types/node@npm:20.17.47":
+  version: 20.17.47
+  resolution: "@types/node@npm:20.17.47"
   dependencies:
     undici-types: "npm:~6.19.2"
-  checksum: 10c0/cac13c0f42467df3254805a671ca9e74a6eb7c41568de972e26b10dcc448a45743aaf00e9e5fce4a9214da5bc8444fe902918e105dac5a224e24e83fd9989a97
+  checksum: 10c0/df336ed7897177214d1c0f2c7e2f94bbc19da28bffd150ad67dfdb373ca55167479a266c836f99450ab6b6a71799a53583b3f4f159c5424255e9f3851cc9d431
   languageName: node
   linkType: hard
 
@@ -551,7 +551,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "ingest-service-infra@workspace:services/ingest-service/infra"
   dependencies:
-    "@types/node": "npm:20.16.1"
+    "@types/node": "npm:20.17.47"
     aws-cdk: "npm:2.152.0"
     aws-cdk-lib: "npm:2.152.0"
     cdk-constructs: "workspace:^"
