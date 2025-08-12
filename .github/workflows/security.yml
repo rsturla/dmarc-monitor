@@ -80,14 +80,14 @@ jobs:
         uses: actions/setup-go@0aaccfd150d50ccaeb58ebd88d36e91967a5f35b # v5
 
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@883d8588e56d1753a8a58c1c86e88976f0c23449 # v3
+        uses: github/codeql-action/init@df559355d593797519d70b90fc8edd5db049e7a2 # v3
         with:
           languages: ${{ matrix.language }}
 
       - name: Autobuild
-        uses: github/codeql-action/autobuild@883d8588e56d1753a8a58c1c86e88976f0c23449 # v3
+        uses: github/codeql-action/autobuild@df559355d593797519d70b90fc8edd5db049e7a2 # v3
 
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@883d8588e56d1753a8a58c1c86e88976f0c23449 # v3
+        uses: github/codeql-action/analyze@df559355d593797519d70b90fc8edd5db049e7a2 # v3
         with:
           category: "/language:${{matrix.language}}"
