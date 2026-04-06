@@ -85,12 +85,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/node@npm:22.4.1":
-  version: 22.4.1
-  resolution: "@types/node@npm:22.4.1"
+"@types/node@npm:22.19.17":
+  version: 22.19.17
+  resolution: "@types/node@npm:22.19.17"
   dependencies:
-    undici-types: "npm:~6.19.2"
-  checksum: 10c0/e42607438fcbd3a6aebd09084868fa0b22a4b0daf9eda79ed615df7ff8ae95e35ea56e090e1f3140ebae76b640abe42d4a6d5b60c0819eadf499adca737305b6
+    undici-types: "npm:~6.21.0"
+  checksum: 10c0/b66c484c0a9f6d88b1ef360b0f487717234ee1a482cb2551ff73d9f3c43a42a777daf4c8a5eee970960728f8fe1f3877d3d8c6ffabcbca74cb401a59db700fa4
   languageName: node
   linkType: hard
 
@@ -264,7 +264,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "cdk-constructs@workspace:libs/cdk-constructs"
   dependencies:
-    "@types/node": "npm:22.4.1"
+    "@types/node": "npm:22.19.17"
     aws-cdk-lib: "npm:2.152.0"
     constructs: "npm:10.3.0"
     typescript: "npm:5.5.4"
@@ -1106,6 +1106,13 @@ __metadata:
   version: 6.19.6
   resolution: "undici-types@npm:6.19.6"
   checksum: 10c0/9b2264c5700e7169c6c62c643aac56cd8984c5fd7e18ed31ff11780260e137f6340dee8317a2e6e0ae3c49f5e5ef6fa577ea07193cbaa535265cba76a267cae9
+  languageName: node
+  linkType: hard
+
+"undici-types@npm:~6.21.0":
+  version: 6.21.0
+  resolution: "undici-types@npm:6.21.0"
+  checksum: 10c0/c01ed51829b10aa72fc3ce64b747f8e74ae9b60eafa19a7b46ef624403508a54c526ffab06a14a26b3120d055e1104d7abe7c9017e83ced038ea5cf52f8d5e04
   languageName: node
   linkType: hard
 
